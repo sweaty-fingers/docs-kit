@@ -1,0 +1,326 @@
+{
+  "about": "docs-kit tabs (features), profiles and default areas. Single source for bin/kit.py (via hooks/kitconf.py) and the Astro site (site/src/config). docs-kit-context.md §5.2-§5.3.",
+  "core_titles": {
+    "개요": 0,
+    "문서 규격": 90,
+    "문서 사이트 사용법": 91
+  },
+  "features": [
+    {
+      "id": "history",
+      "title": "작업 내역",
+      "kind": "nav",
+      "path": "history.md",
+      "rank": 1,
+      "summary": "끝난 작업을 최신순 한 줄씩 (결과 링크, 재현 명령, 자세한 문서). 메뉴 '개요' 아래",
+      "starters": [
+        "docs/history.md"
+      ],
+      "recommends": [],
+      "data": "history.md"
+    },
+    {
+      "id": "plan",
+      "title": "현황판",
+      "kind": "hook",
+      "path": "plan",
+      "rank": 2,
+      "summary": "단계별 진행(Epic > … > WBS), 작업량과 진척·예측, 연구 질문, 리스크 대장, 스프린트 보드",
+      "starters": [
+        "docs/plan/scope.yml",
+        "docs/plan/risks.yml",
+        "docs/plan/sprints.json"
+      ],
+      "recommends": [
+        "roadmap"
+      ],
+      "data": "plan/scope.yml"
+    },
+    {
+      "id": "weekly",
+      "title": "주간 보고",
+      "kind": "hook",
+      "path": "weekly",
+      "rank": 3,
+      "summary": "회의용 진행 보고(업무별 배경·한 일·결과·다음), 업무별 흐름",
+      "starters": [],
+      "recommends": [],
+      "data": "weekly"
+    },
+    {
+      "id": "roadmap",
+      "title": "로드맵",
+      "kind": "hook",
+      "path": "roadmap",
+      "rank": 4,
+      "summary": "한 일과 할 일의 노선도(트랙, 지금·다음·나중), 항목 페이지",
+      "starters": [
+        "docs/roadmap/roadmap.yml"
+      ],
+      "recommends": [],
+      "data": "roadmap/roadmap.yml"
+    },
+    {
+      "id": "graph",
+      "title": "문서 지도",
+      "kind": "hook",
+      "path": "graph",
+      "rank": 5,
+      "summary": "모든 문서와 연결(링크, 머리말 관계, 비슷한 내용), 주제별 성운, 점검, 문서에 질문(로컬 모델)",
+      "starters": [],
+      "recommends": [],
+      "data": "graph"
+    },
+    {
+      "id": "quality",
+      "title": "근거 점검",
+      "kind": "hook",
+      "path": "quality",
+      "rank": 6,
+      "summary": "문서의 주장(번호, 경로, 포트, 수치)을 원천과 대조, 검색 평가, 할루시네이션 사례",
+      "starters": [
+        "docs/quality/config.json",
+        "docs/quality/questions.json",
+        "docs/quality/incidents.json"
+      ],
+      "recommends": [],
+      "data": "quality"
+    },
+    {
+      "id": "publications",
+      "title": "문서함",
+      "kind": "hook",
+      "path": "publications",
+      "rank": 7,
+      "summary": "발행물 P-NNNN: 개요(갱신), 보고서·릴리스 노트·해설·발표(스냅숏)",
+      "starters": [],
+      "recommends": [],
+      "data": "publications"
+    },
+    {
+      "id": "arc42",
+      "title": "아키텍처",
+      "kind": "hook",
+      "path": "arc42",
+      "rank": 8,
+      "summary": "arc42 섹션 A1~A12(정본), 섹션 현황표",
+      "starters": [
+        "docs/arc42/"
+      ],
+      "recommends": [
+        "adr"
+      ],
+      "data": "arc42"
+    },
+    {
+      "id": "adr",
+      "title": "ADR",
+      "kind": "hook",
+      "path": "adr",
+      "rank": 9,
+      "summary": "결정 기록, 의사결정 로그, C4 모델과 아키텍처 뷰어",
+      "starters": [
+        "docs/adr/0001-record-architecture-decisions.md",
+        "docs/adr/c4-model.yml"
+      ],
+      "recommends": [],
+      "data": "adr"
+    },
+    {
+      "id": "experiments",
+      "title": "실험",
+      "kind": "hook",
+      "path": "experiments",
+      "rank": 10,
+      "summary": "실험 EXP-NNNN: 연구 질문·가설 하나 = 문서 하나, 실패도 남김",
+      "starters": [],
+      "recommends": [
+        "records"
+      ],
+      "data": "experiments"
+    },
+    {
+      "id": "records",
+      "title": "검증 기록",
+      "kind": "hook",
+      "path": "records",
+      "rank": 11,
+      "summary": "검증 기록 VR-NNNN: 실행해서 확인한 결과와 증거, 재현(repro.sh, expected.txt)",
+      "starters": [],
+      "recommends": [],
+      "data": "records"
+    },
+    {
+      "id": "models",
+      "title": "모델",
+      "kind": "nav",
+      "path": "models",
+      "rank": 12,
+      "summary": "모델 카드 MC-NNNN: 승격된 모델의 용도, 데이터, 근거 VR, 한계",
+      "starters": [
+        "docs/models/README.md"
+      ],
+      "recommends": [
+        "experiments",
+        "records"
+      ],
+      "data": "models"
+    },
+    {
+      "id": "guides",
+      "title": "실행 가이드",
+      "kind": "nav",
+      "path": "guides",
+      "rank": 13,
+      "summary": "실행 가이드 G<N>: 명령 → 기대 결과 → 안 될 때",
+      "starters": [
+        "docs/guides/g1_getting_started.md"
+      ],
+      "recommends": [],
+      "data": "guides"
+    },
+    {
+      "id": "reference",
+      "title": "참고",
+      "kind": "nav",
+      "path": "reference",
+      "rank": 14,
+      "summary": "참고 R<N>: 여러 문서가 찾아보는 값의 표(주소, 포트, 보관소)",
+      "starters": [
+        "docs/reference/r1_ports.md"
+      ],
+      "recommends": [],
+      "data": "reference"
+    },
+    {
+      "id": "shared",
+      "title": "공용 파일",
+      "kind": "nav",
+      "path": "shared",
+      "rank": 15,
+      "summary": "모두가 같은 버전을 써야 하는 파일의 현재 버전과 받는 곳",
+      "starters": [
+        "docs/shared/README.md"
+      ],
+      "recommends": [],
+      "data": "shared"
+    },
+    {
+      "id": "background",
+      "title": "배경",
+      "kind": "nav",
+      "path": "background",
+      "rank": 16,
+      "summary": "배경 지식, 관련 연구 조사, 도구 설명 (부록 A, NN_ 번호)",
+      "starters": [
+        "docs/background/01_background.md"
+      ],
+      "recommends": [],
+      "data": "background"
+    },
+    {
+      "id": "glossary",
+      "title": "용어집",
+      "kind": "nav",
+      "path": "glossary",
+      "rank": 17,
+      "summary": "모든 용어의 한 줄 뜻과 설명 위치 (= A12)",
+      "starters": [
+        "docs/glossary/README.md"
+      ],
+      "recommends": [],
+      "data": "glossary"
+    }
+  ],
+  "profiles": {
+    "minimal": {
+      "summary": "가장 작은 시작: 결정, 실행 가이드, 용어집",
+      "features": [
+        "adr",
+        "guides",
+        "glossary"
+      ]
+    },
+    "app": {
+      "summary": "당장 쓸 앱·도구 제작: 결정, 로드맵, 가이드·참고, 작업 내역",
+      "features": [
+        "adr",
+        "roadmap",
+        "guides",
+        "reference",
+        "history",
+        "glossary"
+      ]
+    },
+    "dev": {
+      "summary": "개발 과제: arc42 아키텍처, 결정, 검증, 주간 보고·현황판·로드맵, 문서 지도·근거 점검",
+      "features": [
+        "history",
+        "plan",
+        "weekly",
+        "roadmap",
+        "graph",
+        "quality",
+        "publications",
+        "arc42",
+        "adr",
+        "records",
+        "guides",
+        "reference",
+        "shared",
+        "glossary"
+      ]
+    },
+    "research": {
+      "summary": "연구 과제: 배경·실험·검증·모델, 결정, 주간 보고·현황판(연구 질문)·로드맵, 문서 지도·근거 점검",
+      "features": [
+        "history",
+        "plan",
+        "weekly",
+        "roadmap",
+        "graph",
+        "quality",
+        "publications",
+        "adr",
+        "experiments",
+        "records",
+        "models",
+        "guides",
+        "background",
+        "glossary"
+      ]
+    },
+    "all": {
+      "summary": "모든 탭 (연구와 개발을 함께 하는 과제)",
+      "features": [
+        "history",
+        "plan",
+        "weekly",
+        "roadmap",
+        "graph",
+        "quality",
+        "publications",
+        "arc42",
+        "adr",
+        "experiments",
+        "records",
+        "models",
+        "guides",
+        "reference",
+        "shared",
+        "background",
+        "glossary"
+      ]
+    }
+  },
+  "default_areas": {
+    "arch": "구조·설계",
+    "dev-env": "개발 환경",
+    "platform": "플랫폼·연동",
+    "data": "데이터",
+    "quality": "품질·시험",
+    "safety": "안전·보안",
+    "ops": "배포·운영",
+    "docs": "문서"
+  }
+}

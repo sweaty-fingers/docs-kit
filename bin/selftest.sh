@@ -1,55 +1,113 @@
 #!/usr/bin/env bash
-# Build a throwaway project from template/ with this kit and fail on any
-# MkDocs WARNING/ERROR or a missing viewer data file.
-#   bin/selftest.sh            (needs Docker; no network beyond the image)
+# Build throwaway projects from template/ with this kit (Astro edition) and fail on any WARNING or a missing output.
+#   bin/selftest.sh            DOCS_RUNNER=docker|host as for bin/docs.sh (host: Node >= 22.18 on this machine)
+# Checks (prd.md §10): every profile builds with no warning and its tabs in the standard order; a minimal project
+# builds clean again after enable / disable; the fixture project (tests/fixtures/all/) renders the Markdown of
+# FR-MD and the common features; no page loads a script from another host; kit.py migrate moves mkdocs.yml settings.
+# Tab modules that come in later milestones (M4-M6) add their checks here when they are built.
 set -euo pipefail
 
 KIT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-IMAGE="${DOCS_IMAGE:-squidfunk/mkdocs-material:9.5.49}"
 TMP="$(mktemp -d "${TMPDIR:-/tmp}/docs-kit-selftest.XXXXXX")"
 trap '[ -n "${KEEP_TMP:-}" ] || rm -rf "$TMP"' EXIT
+bad=""
+fail() { bad+=$'\n'"$1"; }
 
-mkdir -p "$TMP/.docs-kit"
-tar -C "$KIT" --exclude=.git -cf - . | tar -C "$TMP/.docs-kit" -xf -
-DOCS_ROOT="$TMP" "$TMP/.docs-kit/bin/init.sh" "Selftest" all >/dev/null   # every tab (hooks/kitconf.py)
-# Fixtures (tests/fixtures/all/): two weekly reports, a roadmap with two tracks that merge, a scope with an epic,
-# a far range and a question, a sprint, a risk, a retrieval question, topics; README.append.md cites a missing
-# ADR-0999 (grounding) and has 2-space nesting and a list right under text (hooks/lists.py).
-FIX="$KIT/tests/fixtures/all"
-cp -r "$FIX/docs/." "$TMP/docs/"
-cat "$FIX/README.append.md" >> "$TMP/docs/README.md"
+build() { # project dir -> build log (no exit on failure)
+  DOCS_ROOT="$1" "$KIT/bin/docs.sh" build 2>&1 || echo "ERROR: build failed"
+}
+warnings() { grep -E '^(WARNING|ERROR)|ERROR:|\[(ERROR|WARN)\]' <<<"$1" | sed "s/^/$2: /" || true; }
+tabs() { python3 -c 'import re,sys; print(" | ".join(re.findall(r"class=\"kit-tab\"[^>]*>\s*([^<]+?)\s*<", open(sys.argv[1], encoding="utf-8").read())))' "$1/build/site/index.html"; }
+newproj() { # name profile
+  mkdir -p "$TMP/$1"
+  DOCS_ROOT="$TMP/$1" python3 "$KIT/bin/kit.py" init --name "$1" --profile "$2" >/dev/null
+}
 
-if ! log="$(docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$TMP:/docs" -w /docs "$IMAGE" build 2>&1)"; then
-  echo "$log" | tail -20; echo "selftest FAILED (build error)"; exit 1
+# ---- 0. unit tests of the site modules (prd.md §10), when Node is on the host
+if command -v node >/dev/null 2>&1 && [[ -d "$KIT/site/node_modules" ]]; then
+  ut="$(cd "$KIT/site" && node --test tests/*.test.ts 2>&1)" || fail "unit tests failed:"$'\n'"$(grep -E '^not ok|✖' <<<"$ut" | head -20)"
 fi
-bad="$(echo "$log" | grep -E '^(WARNING|ERROR)' || true)"
-for f in index.html docs-kit.html adr/index.html adr/log.html adr/c4.html adr/guide.html \
-         adr/0001-record-architecture-decisions.html adr/viewer/index.html adr/viewer/data.json \
-         adr/viewer/vendor/elk.bundled.js _kit/stylesheets/theme.css r/home/index.html _kit/javascripts/links.js experiments/list.html weekly/index.html weekly/threads.html weekly/2026-01-12.html \
-         _kit/vendor/mathjax/tex-mml-chtml.js _kit/vendor/mermaid/mermaid.min.js \
-         roadmap/index.html roadmap/guide.html roadmap/items/ab.html roadmap/viewer/index.html roadmap/viewer/data.js \
-         graph/index.html graph/viewer/index.html graph/viewer/data.js plan/index.html plan/guide.html plan/sprints.html plan/board/index.html plan/board/data.js quality/index.html; do
-  [[ -f "$TMP/build/site/$f" ]] || bad+=$'\n'"MISSING build/site/$f"
+
+# ---- 1. every profile: no warning, tabs in the standard order (docs-standard §2, features.json ranks)
+for prof in minimal app dev research all; do
+  newproj "p-$prof" "$prof"
+  log="$(build "$TMP/p-$prof")"
+  w="$(warnings "$log" "$prof")"; [[ -z "$w" ]] || fail "$w"
+  t="$(tabs "$TMP/p-$prof")"
+  want="$(python3 - "$KIT" "$prof" "$TMP/p-$prof" <<'PY'
+import json, os, sys
+kit, prof, root = sys.argv[1:]
+c = json.load(open(os.path.join(kit, "site/src/config/features.json"), encoding="utf-8"))
+on = set(c["profiles"][prof]["features"])
+titles = ["개요"]
+for f in sorted(c["features"], key=lambda f: f["rank"]):
+    if f["id"] not in on or f["id"] == "history":       # history lives under 개요
+        continue
+    if f["id"] == "roadmap" and not os.path.exists(os.path.join(root, "docs/roadmap/roadmap.yml")): continue
+    if f["id"] == "plan" and not os.path.exists(os.path.join(root, "docs/plan/scope.yml")): continue
+    if f["id"] == "quality" and not os.path.isdir(os.path.join(root, "docs/quality")): continue
+    titles.append(f["title"])
+print(" | ".join(titles + ["문서 규격", "문서 사이트 사용법"]))
+PY
+)"
+  [[ "$t" == "$want" ]] || fail "$prof: tabs '$t', expected '$want'"
 done
-n="$(grep -c '보고 2026-01-' "$TMP/build/site/weekly/threads.html" || true)"
-[[ "$n" == 2 ]] || bad+=$'\n'"weekly threads: expected both reports, found $n"
-grep -q 'rm-embed' "$TMP/build/site/roadmap/index.html" && grep -q 'rm-merge' "$TMP/build/site/roadmap/viewer/data.js" \
-  && grep -q '"kind": "adr"' "$TMP/build/site/roadmap/viewer/data.js" \
-  || bad+=$'\n'"roadmap: no viewer embed in roadmap/index.html, or no map / grouped refs in viewer/data.js"
-grep -q '"topics": \[\["a", "갈래 A"\]' "$TMP/build/site/graph/viewer/data.js" && grep -q '"short": "ADR-0001"' "$TMP/build/site/graph/viewer/data.js" && grep -q 'viewer/index.html?embed=1' "$TMP/build/site/graph/index.html" \
-  || bad+=$'\n'"graph: no ADR node in graph/viewer/data.js, or no viewer on graph/index.html"
-grep -q 'class="pl-svg"' "$TMP/build/site/plan/index.html" && grep -q 'data-rval="4,5"><span class="pl-pi-s">20</span><a href="#r01"' "$TMP/build/site/plan/index.html" && grep -q 'id="ep-e1"' "$TMP/build/site/plan/index.html" \
-  || bad+=$'\n'"plan: no burn-up or R01 not in the PI matrix cell 20 on plan/index.html"
-grep -q '"id": "W1"' "$TMP/build/site/plan/board/data.js" && grep -q 'pl-vel' "$TMP/build/site/plan/sprints.html" \
-  || bad+=$'\n'"plan: no card W1 in plan/board/data.js or no velocity chart on plan/sprints.html"
-grep -q 'ADR-0999' "$TMP/build/site/quality/index.html" && grep -q '검색 평가' "$TMP/build/site/quality/index.html" \
-  || bad+=$'\n'"quality: ADR-0999 not reported as false, or no retrieval evaluation on quality/index.html"
-tr -d '\n' < "$TMP/build/site/index.html" | grep -qE '<p>설명:</p>[[:space:]]*<ul>[[:space:]]*<li><strong>상위</strong>:[[:space:]]*<ul>' \
-  || bad+=$'\n'"lists: 2-space nested list or list under text not rendered as nested lists"
-# Pages must not load scripts from a CDN.
-cdn="$(grep -lE 'src="https?://' "$TMP"/build/site/*.html "$TMP"/build/site/adr/*.html 2>/dev/null || true)"
-[[ -z "$cdn" ]] || bad+=$'\n'"EXTERNAL SCRIPT in: $cdn"
-# Ask (bin/docs_ask.py): the per-sentence citation check (host Python, no model needed).
+
+# ---- 2. minimal → enable / disable (docs-kit-context §11.2)
+T2="$TMP/p-minimal"
+t="$(tabs "$T2")"; [[ "$t" == *ADR* && "$t" != *현황판* && "$t" != *"문서 지도"* ]] || fail "minimal: unexpected tabs: $t"
+DOCS_ROOT="$T2" python3 "$KIT/bin/kit.py" enable plan roadmap weekly >/dev/null
+DOCS_ROOT="$T2" python3 "$KIT/bin/kit.py" disable glossary >/dev/null
+[[ -f "$T2/docs/plan/scope.yml" && -f "$T2/docs/roadmap/roadmap.yml" ]] || fail "kit.py enable: starters not copied"
+log="$(build "$T2")"; w="$(warnings "$log" enabled)"; [[ -z "$w" ]] || fail "$w"
+t="$(tabs "$T2")"; [[ "$t" == *현황판*주간\ 보고*로드맵*ADR* && "$t" != *용어집* ]] || fail "kit.py enable/disable: tabs $t"
+
+# ---- 3. the fixture project: every tab, the fixtures of tests/fixtures/all/
+P="$TMP/p-all"
+cp -r "$KIT/tests/fixtures/all/docs/." "$P/docs/"
+cat "$KIT/tests/fixtures/all/README.append.md" >> "$P/docs/README.md"
+log="$(build "$P")"; w="$(warnings "$log" all)"; [[ -z "$w" ]] || fail "$w"
+S="$P/build/site"
+for f in index.html docs-kit.html docs-standard.html adr/index.html adr/log.html adr/c4.html adr/guide.html \
+         adr/0001-record-architecture-decisions.html adr/viewer/index.html adr/viewer/vendor/elk.bundled.js r/home/index.html \
+         experiments/list.html weekly/index.html weekly/threads.html weekly/2026-01-12.html roadmap/index.html roadmap/guide.html \
+         graph/index.html plan/index.html plan/guide.html plan/sprints.html quality/index.html glossary/index.html guides/g2_markdown.html \
+         _kit/kit.css _kit/kit.js _kit/vendor/mermaid/mermaid.min.js _kit/vendor/katex/katex.min.css _kit/pagefind/pagefind.js; do
+  [[ -f "$S/$f" ]] || fail "MISSING build/site/$f"
+done
+tr -d '\n' < "$S/index.html" | grep -qE '<p>설명:</p>[[:space:]]*<ul>[[:space:]]*<li><strong>상위</strong>:[[:space:]]*<ul>' \
+  || fail "lists: 2-space nested list or list under text not rendered as nested lists"
+md="$(python3 - "$S/guides/g2_markdown.html" <<'PY'
+import sys
+h = open(sys.argv[1], encoding="utf-8").read()
+a = h[h.find("<article"):h.find("</article>")]
+checks = {
+    "admonition": 'class="admonition tip"' in a and "도움말 제목" in a and '<p class="admonition-title">Warning</p>' in a,
+    "details": '<details class="admonition info">' in a and '<details class="admonition note" open>' in a,
+    "nested admonition": 'class="admonition danger"' in a,
+    "content tabs": a.count('class="kit-tabs__panel"') == 2,
+    "table row anchor": 'id="sec-2-2-1"' in a,
+    "attr_list": 'id="para-id"' in a and "kit-test-link" in a,
+    "math": 'class="katex"' in a and "katex-display" in a,
+    "mermaid": '<pre class="mermaid">' in a,
+    "task list": a.count("kit-task") == 2,
+    "indented code": "indented code block" in a and "<pre" in a,
+    "snippet": "끼워 넣은 문장입니다." in a,
+    "snippet escape": '--8&#x3C;-- "guides/_snippet.txt:part"' in a,
+    "md in html": "kit-dev-only" in a and "<strong>Markdown</strong>" in a,
+    "short links": "kit-short" in a,
+    "section links": 'href="#21-' in a and "01_background.html#1-" in a and "g1_getting_started.html#2-" in a,
+}
+print(" ".join(k for k, v in checks.items() if not v))
+PY
+)"
+[[ -z "$md" ]] || fail "markdown (guides/g2_markdown.html) not as expected: $md"
+grep -q 'location.replace' "$S/r/home/index.html" || fail "short address r/home/ is not a redirect page"
+# Pages must not load scripts, styles or fonts from another host (NFR-1).
+ext="$(grep -rlE '(src|href)="https?://[^"]+\.(js|css|woff2?)' "$S" --include='*.html' || true)"
+[[ -z "$ext" ]] || fail "EXTERNAL SCRIPT/STYLE in: $ext"
+
+# ---- 4. ask (bin/docs_ask.py): the per-sentence citation check (host Python, no model needed)
 ask="$(python3 - "$KIT/bin" <<'PY'
 import sys; sys.path.insert(0, sys.argv[1]); import docs_ask as a
 ev = [{"text": "한도는 8 N, 포트 8001, 경로 tools/x.sh", "path": "docs/x.md"}]
@@ -57,23 +115,40 @@ got = [s["verdict"] for s in a.check("한도는 8 N이다 [1]. 최대 12 N이다
 print(" ".join(got))
 PY
 )"
-[[ "$ask" == "supported unverified unsupported unsupported none" ]] || bad+=$'\n'"ask: citation check gave '$ask'"
-# Tabs (docs-kit.yml, bin/kit.py): a minimal project builds clean with only its tabs; turning tabs on copies their
-# starters and builds clean again; a tab turned off leaves the menu without a "not in nav" warning.
-T2="$TMP/minimal"; mkdir -p "$T2/.docs-kit"
-tar -C "$KIT" --exclude=.git -cf - . | tar -C "$T2/.docs-kit" -xf -
-DOCS_ROOT="$T2" python3 "$T2/.docs-kit/bin/kit.py" init --name "Minimal" --profile minimal >/dev/null
-build2() { docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$T2:/docs" -w /docs "$IMAGE" build 2>&1; }
-tabs() { python3 -c 'import re,sys; print(" ".join(re.findall(r"md-tabs__link[^>]*>\s*([^<]+?)\s*<", open(sys.argv[1], encoding="utf-8").read())))' "$T2/build/site/index.html"; }
-log2="$(build2)"; bad+="$(echo "$log2" | grep -E '^(WARNING|ERROR)' | sed 's/^/minimal: /' || true)"
-t="$(tabs)"; [[ "$t" == *ADR* && "$t" != *현황판* && "$t" != *"문서 지도"* ]] || bad+=$'\n'"minimal: unexpected tabs: $t"
-DOCS_ROOT="$T2" python3 "$T2/.docs-kit/bin/kit.py" enable plan roadmap weekly >/dev/null
-DOCS_ROOT="$T2" python3 "$T2/.docs-kit/bin/kit.py" disable glossary >/dev/null
-[[ -f "$T2/docs/plan/scope.yml" && -f "$T2/docs/roadmap/roadmap.yml" ]] || bad+=$'\n'"kit.py enable: starters not copied"
-log2="$(build2)"; bad+="$(echo "$log2" | grep -E '^(WARNING|ERROR)' | sed 's/^/enabled: /' || true)"
-t="$(tabs)"; [[ "$t" == *현황판*주간\ 보고*로드맵*ADR* && "$t" != *용어집* ]] || bad+=$'\n'"kit.py enable/disable: tabs $t"
+[[ "$ask" == "supported unverified unsupported unsupported none" ]] || fail "ask: citation check gave '$ask'"
+
+# ---- 5. kit.py migrate: mkdocs.yml settings move to docs-kit.yml, a second run changes nothing
+M="$TMP/p-migrate"; newproj p-migrate minimal
+python3 - "$M/docs-kit.yml" <<'PY'
+import re, sys
+p = sys.argv[1]; t = open(p, encoding="utf-8").read()
+t = re.sub(r"\nsite:.*", "\n", t, flags=re.S)          # an old project: no site / links / nav in docs-kit.yml
+open(p, "w", encoding="utf-8").write(t)
+PY
+cat > "$M/mkdocs.yml" <<'YML'
+INHERIT: .docs-kit/mkdocs.base.yml
+site_name: "옛 프로젝트"
+extra:
+  links:
+    shared_port: 8000
+    short:
+      - {name: home, to: README.md, title: 첫 페이지}
+markdown_extensions:
+  - toc:
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds: {case: lower}
+nav:
+  - 개요: README.md
+YML
+log="$(build "$M")"; grep -q 'settings read from mkdocs.yml' <<<"$log" || fail "migrate: no warning while settings are in mkdocs.yml"
+DOCS_ROOT="$M" python3 "$KIT/bin/kit.py" migrate >/dev/null
+grep -q '^site:' "$M/docs-kit.yml" && grep -q 'name: "옛 프로젝트"' "$M/docs-kit.yml" && grep -q 'shared_port: 8000' "$M/docs-kit.yml" \
+  || fail "migrate: site settings not written to docs-kit.yml"
+before="$(cat "$M/docs-kit.yml")"; DOCS_ROOT="$M" python3 "$KIT/bin/kit.py" migrate >/dev/null
+[[ "$before" == "$(cat "$M/docs-kit.yml")" ]] || fail "migrate: a second run changed docs-kit.yml"
+log="$(build "$M")"; w="$(warnings "$log" migrated)"; [[ -z "$w" ]] || fail "$w"
 
 if [[ -n "$bad" ]]; then
   echo "$bad"; echo "selftest FAILED"; exit 1
 fi
-echo "selftest OK ($(find "$TMP/build/site" -name '*.html' | wc -l) pages)"
+echo "selftest OK ($(find "$S" -name '*.html' | wc -l | tr -d ' ') pages)"

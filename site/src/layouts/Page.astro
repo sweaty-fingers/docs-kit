@@ -1,0 +1,187 @@
+---
+// One documentation page (prd.md FR-UI-1..7): header (logo, site name, search, theme), top-level tab row, the
+// current tab's sections on the left, the page, "이 페이지" on the right, previous / next. Below 960px the tabs
+// and sections become one drawer and "이 페이지" folds above the page. Front matter `hide: [navigation]` /
+// `hide: [navigation, toc]` widens the page (dashboards, maps).
+import Icon from '../components/Icon.astro';
+import NavTree from '../components/NavTree.astro';
+import { buildNav, tabOf } from '../lib/nav.ts';
+import { relUrl } from '../lib/links.ts';
+import type { Page, Site } from '../lib/site.ts';
+
+interface Props {
+	site: Site;
+	page: Page;
+}
+const { site, page } = Astro.props;
+const cfg = site.cfg;
+const nav = buildNav(site);
+const tab = tabOf(nav, page);
+const up = '../'.repeat(page.url.split('/').length - 1);
+const home = relUrl(page.url, 'index.html') || 'index.html';
+const current = tab >= 0 ? nav.tree[tab] : null;
+const sideNodes = current ? (current.kind === 'section' ? current.children : [current]) : [];
+const hideNav = page.hide.includes('navigation') || !sideNodes.length;
+const toc = page.hide.includes('toc') ? [] : page.headings.filter((h) => h.depth >= 2 && h.depth <= 3);
+const i = nav.order.findIndex((o) => o.rel === page.rel);
+const prev = i > 0 ? nav.order[i - 1] : null;
+const next = i >= 0 && i < nav.order.length - 1 ? nav.order[i + 1] : null;
+const tabHref = (n: (typeof nav.tree)[number]): string => {
+	const first = n.kind === 'page' ? n : nav.order.find((o) => nav.tree.indexOf(n) === o.tab);
+	return first ? relUrl(page.url, first.url) || '#' : '#';
+};
+const siteName = cfg.site.name;
+const titleText = page.url === 'index.html' ? siteName : `${page.title} - ${siteName}`;
+const description = typeof page.front.description === 'string' ? page.front.description : undefined;
+const hasMath = page.html.includes('class="katex');
+const hasMermaid = page.html.includes('class="mermaid"');
+---
+<!doctype html>
+<html lang="ko" data-kit-page={page.url}>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="generator" content="docs-kit" />
+		<link rel="icon" href="data:," />
+		<title>{titleText}</title>
+		{description && <meta name="description" content={description} />}
+		<script is:inline>
+			try {
+				var t = localStorage.getItem('kit-theme');
+				if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+			} catch (e) {}
+		</script>
+		<link rel="stylesheet" href={`${up}_kit/kit.css`} />
+		{hasMath && <link rel="stylesheet" href={`${up}_kit/vendor/katex/katex.min.css`} />}
+		{cfg.site.extra_css.map((c) => <link rel="stylesheet" href={`${up}${c}`} />)}
+	</head>
+	<body class:list={['kit', { 'kit--wide': hideNav, 'kit--no-toc': !toc.length }]} data-shared-port={cfg.site.shared_port ?? ''} data-up={up}>
+		<a class="kit-skip" href="#kit-content">본문으로 건너뛰기</a>
+		<header class="kit-header">
+			<div class="kit-header__row">
+				<button type="button" class="kit-iconbtn kit-burger" aria-label="메뉴 열기" aria-controls="kit-drawer" aria-expanded="false" data-kit-open-drawer>
+					<Icon name="menu" />
+				</button>
+				<a class="kit-brand" href={home}>
+					<Icon name={cfg.site.logo_icon} size={24} />
+					<span class="kit-brand__name">{siteName}</span>
+				</a>
+				<div class="kit-header__tools">
+					<button type="button" class="kit-search-btn" data-kit-search aria-label="검색 (/)">
+						<Icon name="search" size={18} /><span class="kit-search-btn__label">검색</span><kbd>/</kbd>
+					</button>
+					<button type="button" class="kit-iconbtn" data-kit-theme aria-label="밝음/어두움 전환">
+						<span class="kit-theme-dark"><Icon name="moon" /></span><span class="kit-theme-light"><Icon name="sun" /></span>
+					</button>
+				</div>
+			</div>
+			<nav class="kit-tabs-row" aria-label="최상위 탭">
+				<ul>
+					{
+						nav.tree.map((n, k) => (
+							<li>
+								<a href={tabHref(n)} class="kit-tab" aria-current={k === tab ? 'true' : undefined}>
+									{n.title}
+								</a>
+							</li>
+						))
+					}
+				</ul>
+			</nav>
+		</header>
+
+		<div class="kit-drawer" id="kit-drawer" hidden>
+			<div class="kit-drawer__scrim" data-kit-close-drawer></div>
+			<nav class="kit-drawer__panel" aria-label="전체 메뉴">
+				<div class="kit-drawer__head">
+					<a class="kit-brand" href={home}><Icon name={cfg.site.logo_icon} size={22} /><span class="kit-brand__name">{siteName}</span></a>
+					<button type="button" class="kit-iconbtn" aria-label="메뉴 닫기" data-kit-close-drawer><Icon name="close" /></button>
+				</div>
+				<NavTree nodes={nav.tree} from={page.url} fold />
+			</nav>
+		</div>
+
+		<div class="kit-layout">
+			{
+				!hideNav && (
+					<aside class="kit-sidebar" aria-label={current ? `${current.title} 메뉴` : '메뉴'}>
+						<div class="kit-sidebar__inner">
+							{current && current.kind === 'section' && <p class="kit-sidebar__title">{current.title}</p>}
+							<NavTree nodes={sideNodes} from={page.url} />
+						</div>
+					</aside>
+				)
+			}
+			<main class="kit-main" id="kit-content">
+				{
+					toc.length > 1 && (
+						<details class="kit-toc-mobile">
+							<summary>이 페이지</summary>
+							<ul>
+								{toc.map((h) => (
+									<li class={`kit-toc__d${h.depth}`}>
+										<a href={`#${h.id}`}>{h.text.replace(/¶$/, '')}</a>
+									</li>
+								))}
+							</ul>
+						</details>
+					)
+				}
+				<article class="kit-content" data-pagefind-body={page.template ? undefined : ''}>
+					<Fragment set:html={page.html} />
+				</article>
+				{
+					(prev || next) && (
+						<nav class="kit-pager" aria-label="이전·다음 문서">
+							{prev ? (
+								<a class="kit-pager__link kit-pager__prev" href={relUrl(page.url, prev.url) || '#'}>
+									<span class="kit-pager__dir"><Icon name="chevron-left" size={16} />이전</span>
+									<span class="kit-pager__title">{prev.title}</span>
+								</a>
+							) : (
+								<span />
+							)}
+							{next && (
+								<a class="kit-pager__link kit-pager__next" href={relUrl(page.url, next.url) || '#'}>
+									<span class="kit-pager__dir">다음<Icon name="chevron-right" size={16} /></span>
+									<span class="kit-pager__title">{next.title}</span>
+								</a>
+							)}
+						</nav>
+					)
+				}
+			</main>
+			{
+				toc.length > 0 && (
+					<aside class="kit-toc" aria-label="이 페이지">
+						<div class="kit-toc__inner">
+							<p class="kit-toc__title">이 페이지</p>
+							<ul>
+								{toc.map((h) => (
+									<li class={`kit-toc__d${h.depth}`}>
+										<a href={`#${h.id}`}>{h.text.replace(/¶$/, '')}</a>
+									</li>
+								))}
+							</ul>
+						</div>
+					</aside>
+				)
+			}
+		</div>
+		<button type="button" class="kit-top" aria-label="맨 위로" data-kit-top hidden><Icon name="arrow-up" size={18} /></button>
+
+		<div class="kit-search" id="kit-search" hidden role="dialog" aria-modal="true" aria-label="검색">
+			<div class="kit-search__scrim" data-kit-close-search></div>
+			<div class="kit-search__panel">
+				<div class="kit-search__head">
+					<strong>검색</strong>
+					<button type="button" class="kit-iconbtn" aria-label="검색 닫기" data-kit-close-search><Icon name="close" /></button>
+				</div>
+				<div id="kit-search-ui" data-bundle={`${up}_kit/pagefind/`}></div>
+			</div>
+		</div>
+		{hasMermaid && <script is:inline src={`${up}_kit/vendor/mermaid/mermaid.min.js`}></script>}
+		<script is:inline src={`${up}_kit/kit.js`}></script>
+		{cfg.site.extra_js.map((s) => <script is:inline src={`${up}${s}`}></script>)}
+	</body>
+</html>

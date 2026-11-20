@@ -1,0 +1,59 @@
+---
+// Short addresses /r/<name>/ (prd.md FR-CORE-2, port of hooks/links.py): forward to a page, a Rerun recording, a
+// Rerun catalog or another server on the reader's host. Built as r/<name>.html, moved to r/<name>/index.html.
+import { loadConfig } from '../../config/load.ts';
+import { getSite, urlOf } from '../../lib/site.ts';
+import { warn } from '../../lib/warnings.ts';
+
+export async function getStaticPaths() {
+	const NAME = /^[a-z0-9][a-z0-9._-]*$/;
+	const cfg = loadConfig();
+	const seen = new Set<string>();
+	const out = [];
+	for (const s of cfg.links) {
+		if (!NAME.test(s.name) || !s.to || seen.has(s.name)) {
+			warn('links', 'docs-kit.yml', `short address needs a unique lower-case name and a target: ${JSON.stringify(s)}`);
+			continue;
+		}
+		seen.add(s.name);
+		out.push({ params: { name: s.name }, props: { to: s.to, title: s.title } });
+	}
+	return out;
+}
+
+const { to, title } = Astro.props as { to: string; title: string };
+const site = await getSite();
+const { web_port, file_port } = site.cfg.rerun;
+let dest = '';
+let target = '';
+if (!['rerun:', 'catalog:', 'port:'].some((p) => to.startsWith(p))) {
+	const page = site.byRel.get(to);
+	if (!page) warn('links', 'docs-kit.yml', `short address r/${Astro.params.name}/ points to ${to}, which is not a page in docs/`);
+	else dest = '../../' + urlOf(page.rel);
+	target = `function () { return ${JSON.stringify(dest || '../../index.html')}; }`;
+} else if (to.startsWith('rerun:')) {
+	target = `function (h) { var f = 'http://' + h + ':${file_port}/' + ${JSON.stringify(to.slice(6))}; return 'http://' + h + ':${web_port}/?url=' + encodeURIComponent(f); }`;
+} else if (to.startsWith('catalog:')) {
+	const [port, web] = to.slice(8).split('@');
+	target = `function (h) { return 'http://' + h + ':${web || web_port}/?url=' + encodeURIComponent('rerun+http://' + h + ':' + ${JSON.stringify(port)}); }`;
+} else {
+	const rest = to.slice(5);
+	const k = rest.indexOf('/');
+	target = `function (h) { return location.protocol + '//' + h + ':${k < 0 ? rest : rest.slice(0, k)}/' + ${JSON.stringify(k < 0 ? '' : rest.slice(k + 1))}; }`;
+}
+const script = `(function () { var t = ${target}; location.replace(t(location.hostname || 'localhost')); })();`;
+---
+<!doctype html>
+<html lang="ko">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="robots" content="noindex" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>{title || Astro.params.name}</title>
+		{dest && <meta http-equiv="refresh" content={`0; url=${dest}`} />}
+		<script is:inline set:html={script} />
+	</head>
+	<body style="font-family:sans-serif;padding:16px">
+		<p>이동 중입니다. 자동으로 열리지 않으면 <a href={dest || '#'}>여기</a>를 누릅니다.</p>
+	</body>
+</html>

@@ -1,4 +1,4 @@
-# docs-kit 프로젝트 설정: 켤 탭(메뉴)과 분야 목록입니다.
+# docs-kit 프로젝트 설정: 켤 탭(메뉴), 분야 목록, 사이트 설정입니다. 프로젝트 설정 파일은 이것 하나입니다.
 #   보기:   .docs-kit/bin/kit.py status
 #   바꾸기: .docs-kit/bin/kit.py enable <id> | disable <id> | profile <묶음>   (켤 때 시작 파일을 복사)
 # 탭과 묶음의 설명은 사이트의 "문서 사이트 사용법" §7과 "문서 규격" §13에 있습니다.
@@ -13,3 +13,18 @@ areas:                           # ADR·VR·EXP 머리말 area 값 (id: 이름).
   safety: 안전·보안
   ops: 배포·운영
   docs: 문서
+
+site:
+  name: "{{PROJECT}}"
+  logo_icon: book-open-page-variant
+  # issues_url: https://gitlab.example.com/group/project/-/issues/   # #12, !27 링크 (보고, 로드맵, 현황판)
+  # shared_port: 8000              # 공유 사이트 포트: 이 포트가 아니면 kit-dev-only 블록이 보임
+  # base: /<저장소 이름>/            # 하위 경로에 배포할 때 (예: GitHub Pages 프로젝트 사이트). 루트면 비움
+  # url: https://<호스트>            # 사이트 주소 (선택)
+  # extra_css: [_static/site.css]    # docs/ 아래 프로젝트 스타일 (선택)
+
+links:                           # 짧은 주소 /r/<name>/
+  - {name: home, to: README.md, title: 첫 페이지}
+
+# nav:                           # 메뉴를 직접 정할 때만. 없으면 개요 + 켠 탭이 규격 순서로 들어감
+#   - 개요: README.md

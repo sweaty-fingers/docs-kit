@@ -2,7 +2,7 @@
 
 <이 프로젝트가 무엇을, 왜 하는지 2~3줄. 자세한 목표는 정본(arc42 A1 또는 이 페이지의 §1)에 둡니다.>
 
-웹으로 보려면 `.docs-kit/bin/docs.sh start` 후 `http://localhost:8000/`을 엽니다. 쓰는 법은 [문서 사이트 사용법](docs-kit.md), 문서를 어디에 어떻게 쓰는지는 [문서 규격](docs-standard.md)에 있습니다.
+웹으로 보려면 `.docs-kit/bin/docs.sh start` 후 `http://localhost:8000/`을 엽니다(정적 사이트 만들기: `.docs-kit/bin/docs.sh build` → `build/site/`). 쓰는 법은 [문서 사이트 사용법](docs-kit.md), 문서를 어디에 어떻게 쓰는지는 [문서 규격](docs-standard.md)에 있습니다.
 
 ## 1. 목표
 

@@ -1,0 +1,14 @@
+---
+// Every page of docs/ (over the kit's assets/): docs/a/b.md → a/b.html, docs/a/README.md → a/index.html.
+import PageLayout from '../layouts/Page.astro';
+import { getSite } from '../lib/site.ts';
+
+export async function getStaticPaths() {
+	const site = await getSite();
+	return site.pages.map((p) => ({ params: { slug: p.slug }, props: { url: p.url } }));
+}
+const { url } = Astro.props as { url: string };
+const site = await getSite();
+const page = site.byUrl.get(url)!;
+---
+<PageLayout site={site} page={page} />

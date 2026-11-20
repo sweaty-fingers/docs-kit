@@ -8,7 +8,8 @@
     .docs-kit/bin/kit.py profile <minimal|app|dev|research|all>   change the starting set (overrides stay)
     .docs-kit/bin/kit.py profiles                                 what each profile turns on
     .docs-kit/bin/kit.py check [--fetch]                          for the start of a session: exit 1 on any problem
-    .docs-kit/bin/kit.py update                                   move the kit to origin/main (if clean), show what changed
+    .docs-kit/bin/kit.py update                                   move the kit to origin/<its branch> (if clean), show what changed
+    .docs-kit/bin/kit.py migrate                                  move site settings from mkdocs.yml into docs-kit.yml
 
 The project is the folder that contains .docs-kit/ (or DOCS_ROOT). Settings: <project>/docs-kit.yml (hooks/kitconf.py).
 Edits keep the file's comments: only the lines that change are rewritten. Standard library only (Python 3.8+), so it
@@ -186,6 +187,25 @@ def missing_starters(cfg):
 
 
 # ---------------- commands ----------------
+def track_branch():
+    """The kit branch the project follows: the checked-out branch, else .gitmodules `branch` for the kit's path
+    (submodules are checked out detached), else main. The Astro edition lives on `astro` (README §1)."""
+    rc, branch = git("rev-parse", "--abbrev-ref", "HEAD")
+    if rc == 0 and branch and branch != "HEAD":
+        return branch
+    rel = os.path.relpath(KIT, ROOT).replace(os.sep, "/")
+    gm = os.path.join(ROOT, ".gitmodules")
+    if os.path.exists(gm):
+        rc, out = git("config", "-f", gm, "--get-regexp", r"^submodule\..*\.path$", cwd=ROOT)
+        for line in out.splitlines() if rc == 0 else []:
+            key, _, path = line.partition(" ")
+            if path.strip() == rel:
+                rc2, b = git("config", "-f", gm, "--get", key[: -len(".path")] + ".branch", cwd=ROOT)
+                if rc2 == 0 and b:
+                    return b
+    return "main"
+
+
 def kit_state(fetch=False):
     """(lines, problems) about the kit checkout: version, branch, local changes, push state, newer upstream."""
     lines, problems = [], []
@@ -201,14 +221,15 @@ def kit_state(fetch=False):
     if dirty:
         problems.append("docs-kit has uncommitted changes: finish them in the docs-kit repository "
                         "(VERSION, CHANGELOG, bin/selftest.sh, commit, push) - AGENTS.md")
-    rc, counts = git("rev-list", "--left-right", "--count", "HEAD...origin/main")
+    tb = track_branch()
+    rc, counts = git("rev-list", "--left-right", "--count", f"HEAD...origin/{tb}")
     if rc == 0 and counts:
         ahead, behind = (int(x) for x in counts.split())
         if ahead:
-            problems.append(f"docs-kit has {ahead} commit(s) not on origin/main: push the docs-kit repository first")
+            problems.append(f"docs-kit has {ahead} commit(s) not on origin/{tb}: push the docs-kit repository first")
         if behind:
-            _, newer = git("show", "origin/main:VERSION")
-            lines.append(f"newer docs-kit on origin/main: {newer.strip()} ({behind} commit(s)); "
+            _, newer = git("show", f"origin/{tb}:VERSION")
+            lines.append(f"newer docs-kit on origin/{tb}: {newer.strip()} ({behind} commit(s)); "
                          "`.docs-kit/bin/kit.py update` to take it")
     return lines, problems
 
@@ -307,9 +328,10 @@ def cmd_init(a):
         say("update .gitignore (build/)")
     say()
     say(f"profile {cfg['profile']}: " + ", ".join(f.id for f in kitconf.FEATURES if kitconf.enabled(cfg, f.id)))
-    say("next   .docs-kit/bin/docs.sh build  (no WARNING), .docs-kit/bin/docs.sh start  (http://localhost:8000/)")
+    say("next   set site.name (and site.base for a sub-path deploy) in docs-kit.yml")
+    say("       .docs-kit/bin/docs.sh build  (no WARNING), .docs-kit/bin/docs.sh start  (http://localhost:8000/)")
     say("       add the docs-kit section to AGENTS.md: .docs-kit/AGENTS-GUIDE.md §4")
-    say("       git add .gitmodules .docs-kit docs-kit.yml mkdocs.yml docs .gitignore AGENTS.md && git commit")
+    say("       git add .gitmodules .docs-kit docs-kit.yml docs .gitignore AGENTS.md && git commit")
 
 
 def cmd_check(a):
@@ -321,6 +343,8 @@ def cmd_check(a):
     miss = missing_starters(cfg)
     if miss:
         problems.append("tabs on without files: %s (`.docs-kit/bin/kit.py enable %s`)" % (", ".join(miss), " ".join(miss)))
+    if cfg["found"] and os.path.exists(os.path.join(ROOT, "mkdocs.yml")) and not re.search(r"^site\s*:", cfg_text(), re.M):
+        problems.append("site settings are still in mkdocs.yml (`.docs-kit/bin/kit.py migrate` moves them to docs-kit.yml)")
     for l in lines:
         say("OK    " + l if not l.startswith("newer") else "INFO  " + l)
     for p in problems:
@@ -337,7 +361,8 @@ def cmd_update(a):
             say("WARN  " + p)
         sys.exit("update stopped: finish the docs-kit changes above first")
     old = open(os.path.join(KIT, "VERSION")).read().strip()
-    rc, out = git("checkout", "-B", "main", "origin/main")
+    tb = track_branch()
+    rc, out = git("checkout", "-B", tb, f"origin/{tb}")
     if rc != 0:
         sys.exit(out)
     new = open(os.path.join(KIT, "VERSION")).read().strip()
@@ -353,6 +378,83 @@ def cmd_update(a):
                 say("  " + line.strip())
     say("next   .docs-kit/bin/docs.sh build (no WARNING); move documents to a new format if the CHANGELOG says so;")
     say("       git add .docs-kit && git commit -m \"docs-kit %s\"" % new)
+
+
+# ---------------- migrate (prd.md §9 MIG-3) ----------------
+def _yaml_scalar(v):
+    s = str(v)
+    if re.match(r"^[\w./:@-]+$", s) and not re.match(r"^(true|false|yes|no|on|off|null|~|\d.*)$", s, re.I):
+        return s
+    return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def _nav_yaml(items, indent):
+    out = []
+    pad = " " * indent
+    for it in items:
+        if isinstance(it, dict):
+            for k, v in it.items():
+                if isinstance(v, list):
+                    out.append(f"{pad}- {_yaml_scalar(k)}:")
+                    out += _nav_yaml(v, indent + 4)
+                else:
+                    out.append(f"{pad}- {_yaml_scalar(k)}: {_yaml_scalar(v)}")
+        else:
+            out.append(f"{pad}- {_yaml_scalar(it)}")
+    return out
+
+
+def cmd_migrate(a):
+    """Move site settings from mkdocs.yml (MkDocs edition) into docs-kit.yml. Safe to run again: keys that
+    docs-kit.yml already has are kept. mkdocs.yml is left in place for the user to delete."""
+    mk = os.path.join(ROOT, "mkdocs.yml")
+    if not os.path.exists(mk):
+        sys.exit("no mkdocs.yml in %s: nothing to migrate" % ROOT)
+    try:
+        import yaml
+    except ImportError:
+        sys.exit("kit.py migrate needs PyYAML to read mkdocs.yml (pip install pyyaml), or copy the settings by hand "
+                 "(docs-kit.yml: site, links, rerun, nav)")
+
+    class Loader(yaml.SafeLoader):
+        pass
+
+    Loader.add_multi_constructor("tag:yaml.org,2002:python/", lambda loader, suffix, node: None)
+    with open(mk, encoding="utf-8") as f:
+        m = yaml.load(f, Loader=Loader) or {}
+    text = cfg_text()
+    have = {k for k in ("site", "links", "rerun", "nav") if re.search(r"^%s\s*:" % k, text, re.M)}
+    extra = m.get("extra") or {}
+    links = extra.get("links") or {}
+    add = []
+    if "site" not in have:
+        add.append("site:")
+        add.append(f"  name: {_yaml_scalar(m.get('site_name') or os.path.basename(ROOT))}")
+        logo = ((m.get("theme") or {}).get("icon") or {}).get("logo")
+        if logo:
+            add.append(f"  logo_icon: {_yaml_scalar(str(logo).replace('material/', ''))}")
+        if extra.get("issues_url"):
+            add.append(f"  issues_url: {_yaml_scalar(extra['issues_url'])}")
+        if links.get("shared_port") is not None:
+            add.append(f"  shared_port: {links['shared_port']}")
+    if "links" not in have and links.get("short"):
+        add.append("links:")
+        for e in links["short"]:
+            add.append("  - {name: %s, to: %s, title: %s}" % (_yaml_scalar(e.get("name", "")), _yaml_scalar(e.get("to", "")),
+                                                            _yaml_scalar(e.get("title", ""))))
+    if "rerun" not in have and extra.get("rerun"):
+        r = extra["rerun"]
+        add.append("rerun: {%s}" % ", ".join("%s: %s" % (k, _yaml_scalar(v)) for k, v in r.items()))
+    if "nav" not in have and m.get("nav"):
+        add.append("nav:")
+        add += _nav_yaml(m["nav"], 2)
+    if not add:
+        say("docs-kit.yml already has site / links / rerun / nav: nothing to move")
+        return
+    cfg_write(text.rstrip("\n") + "\n\n# moved from mkdocs.yml by kit.py migrate\n" + "\n".join(add) + "\n")
+    say("update docs-kit.yml (" + ", ".join(sorted({l.split(":")[0] for l in add if not l.startswith(" ")})) + ")")
+    say("note   mkdocs.yml is not used by the Astro edition; delete it when the site builds clean "
+        "(.docs-kit/bin/docs.sh build)")
 
 
 def main():
@@ -380,6 +482,7 @@ def main():
     s.add_argument("--fetch", action="store_true")
     s.set_defaults(fn=cmd_check)
     sp.add_parser("update").set_defaults(fn=cmd_update)
+    sp.add_parser("migrate").set_defaults(fn=cmd_migrate)
     a = p.parse_args()
     if not getattr(a, "fn", None):
         a = p.parse_args(["status"])

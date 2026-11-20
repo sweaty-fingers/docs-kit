@@ -40,82 +40,20 @@ class Feature:
 
 
 # Menu order = docs-standard §2. rank decides where an auto-added tab goes (hooks/kit_nav.py).
-FEATURES = [
-    Feature("history", "작업 내역", "nav", "history.md", 1,
-            "끝난 작업을 최신순 한 줄씩 (결과 링크, 재현 명령, 자세한 문서). 메뉴 '개요' 아래",
-            starters=["docs/history.md"]),
-    Feature("plan", "현황판", "hook", "plan", 2,
-            "단계별 진행(Epic > … > WBS), 작업량과 진척·예측, 연구 질문, 리스크 대장, 스프린트 보드",
-            starters=["docs/plan/scope.yml", "docs/plan/risks.yml", "docs/plan/sprints.json"],
-            recommends=["roadmap"], data="plan/scope.yml"),
-    Feature("weekly", "주간 보고", "hook", "weekly", 3,
-            "회의용 진행 보고(업무별 배경·한 일·결과·다음), 업무별 흐름"),
-    Feature("roadmap", "로드맵", "hook", "roadmap", 4,
-            "한 일과 할 일의 노선도(트랙, 지금·다음·나중), 항목 페이지",
-            starters=["docs/roadmap/roadmap.yml"], data="roadmap/roadmap.yml"),
-    Feature("graph", "문서 지도", "hook", "graph", 5,
-            "모든 문서와 연결(링크, 머리말 관계, 비슷한 내용), 주제별 성운, 점검, 문서에 질문(로컬 모델)"),
-    Feature("quality", "근거 점검", "hook", "quality", 6,
-            "문서의 주장(번호, 경로, 포트, 수치)을 원천과 대조, 검색 평가, 할루시네이션 사례",
-            starters=["docs/quality/config.json", "docs/quality/questions.json", "docs/quality/incidents.json"]),
-    Feature("publications", "문서함", "hook", "publications", 7,
-            "발행물 P-NNNN: 개요(갱신), 보고서·릴리스 노트·해설·발표(스냅숏)"),
-    Feature("arc42", "아키텍처", "hook", "arc42", 8,
-            "arc42 섹션 A1~A12(정본), 섹션 현황표", starters=["docs/arc42/"], recommends=["adr"]),
-    Feature("adr", "ADR", "hook", "adr", 9,
-            "결정 기록, 의사결정 로그, C4 모델과 아키텍처 뷰어",
-            starters=["docs/adr/0001-record-architecture-decisions.md", "docs/adr/c4-model.yml"]),
-    Feature("experiments", "실험", "hook", "experiments", 10,
-            "실험 EXP-NNNN: 연구 질문·가설 하나 = 문서 하나, 실패도 남김", recommends=["records"]),
-    Feature("records", "검증 기록", "hook", "records", 11,
-            "검증 기록 VR-NNNN: 실행해서 확인한 결과와 증거, 재현(repro.sh, expected.txt)"),
-    Feature("models", "모델", "nav", "models", 12,
-            "모델 카드 MC-NNNN: 승격된 모델의 용도, 데이터, 근거 VR, 한계", starters=["docs/models/README.md"],
-            recommends=["experiments", "records"]),
-    Feature("guides", "실행 가이드", "nav", "guides", 13,
-            "실행 가이드 G<N>: 명령 → 기대 결과 → 안 될 때", starters=["docs/guides/g1_getting_started.md"]),
-    Feature("reference", "참고", "nav", "reference", 14,
-            "참고 R<N>: 여러 문서가 찾아보는 값의 표(주소, 포트, 보관소)", starters=["docs/reference/r1_ports.md"]),
-    Feature("shared", "공용 파일", "nav", "shared", 15,
-            "모두가 같은 버전을 써야 하는 파일의 현재 버전과 받는 곳", starters=["docs/shared/README.md"]),
-    Feature("background", "배경", "nav", "background", 16,
-            "배경 지식, 관련 연구 조사, 도구 설명 (부록 A, NN_ 번호)", starters=["docs/background/01_background.md"]),
-    Feature("glossary", "용어집", "nav", "glossary", 17,
-            "모든 용어의 한 줄 뜻과 설명 위치 (= A12)", starters=["docs/glossary/README.md"]),
-]
-BY_ID = {f.id: f for f in FEATURES}
-CORE_TITLES = {"개요": 0, "문서 규격": 90, "문서 사이트 사용법": 91}
-RANK = dict(CORE_TITLES, **{f.title: f.rank for f in FEATURES})
+# The catalog lives in site/src/config/features.json so the Astro site and this module read the same list (prd.md
+# FR-CFG-2).
+import json as _json
 
-PROFILES = {
-    "minimal": {
-        "summary": "가장 작은 시작: 결정, 실행 가이드, 용어집",
-        "features": ["adr", "guides", "glossary"]},
-    "app": {
-        "summary": "당장 쓸 앱·도구 제작: 결정, 로드맵, 가이드·참고, 작업 내역",
-        "features": ["adr", "roadmap", "guides", "reference", "history", "glossary"]},
-    "dev": {
-        "summary": "개발 과제: arc42 아키텍처, 결정, 검증, 주간 보고·현황판·로드맵, 문서 지도·근거 점검",
-        "features": ["history", "plan", "weekly", "roadmap", "graph", "quality", "publications", "arc42", "adr",
-                     "records", "guides", "reference", "shared", "glossary"]},
-    "research": {
-        "summary": "연구 과제: 배경·실험·검증·모델, 결정, 주간 보고·현황판(연구 질문)·로드맵, 문서 지도·근거 점검",
-        "features": ["history", "plan", "weekly", "roadmap", "graph", "quality", "publications", "adr", "experiments",
-                     "records", "models", "guides", "background", "glossary"]},
-    "all": {
-        "summary": "모든 탭 (연구와 개발을 함께 하는 과제)",
-        "features": [f.id for f in FEATURES]},
-}
-DEFAULT_AREAS = {
-    "arch": "구조·설계",
-    "dev-env": "개발 환경",
-    "platform": "플랫폼·연동",
-    "data": "데이터",
-    "quality": "품질·시험",
-    "safety": "안전·보안",
-    "ops": "배포·운영",
-    "docs": "문서",
-}
+with open(os.path.join(KIT, "site", "src", "config", "features.json"), encoding="utf-8") as _f:
+    _CATALOG = _json.load(_f)
+
+FEATURES = [Feature(d["id"], d["title"], d["kind"], d["path"], d["rank"], d["summary"], d.get("starters", ()),
+                    d.get("recommends", ()), d.get("data")) for d in _CATALOG["features"]]
+BY_ID = {f.id: f for f in FEATURES}
+CORE_TITLES = dict(_CATALOG["core_titles"])
+RANK = dict(CORE_TITLES, **{f.title: f.rank for f in FEATURES})
+PROFILES = {name: dict(p) for name, p in _CATALOG["profiles"].items()}
+DEFAULT_AREAS = dict(_CATALOG["default_areas"])
 
 
 # ---------------- reading docs-kit.yml ----------------

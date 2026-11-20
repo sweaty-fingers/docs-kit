@@ -1,0 +1,39 @@
+---
+// One level of the menu tree: pages are links, sections are a group heading (sidebar) or a folding group (drawer).
+import type { NavNode } from '../lib/nav.ts';
+import { relUrl } from '../lib/links.ts';
+
+interface Props {
+	nodes: NavNode[];
+	from: string; // url of the page being rendered
+	fold?: boolean; // drawer: sections fold
+	depth?: number;
+}
+const { nodes, from, fold = false, depth = 0 } = Astro.props;
+const holds = (n: NavNode): boolean => (n.kind === 'page' ? n.url === from : n.children.some(holds));
+---
+<ul class={`kit-nav kit-nav--d${depth}`}>
+	{
+		nodes.map((n) =>
+			n.kind === 'page' ? (
+				<li class="kit-nav__item">
+					<a class="kit-nav__link" href={relUrl(from, n.url) || '#'} aria-current={n.url === from ? 'page' : undefined}>
+						{n.title}
+					</a>
+				</li>
+			) : fold ? (
+				<li class="kit-nav__item kit-nav__item--section">
+					<details open={holds(n) ? true : undefined}>
+						<summary class="kit-nav__summary">{n.title}</summary>
+						<Astro.self nodes={n.children} from={from} fold depth={depth + 1} />
+					</details>
+				</li>
+			) : (
+				<li class="kit-nav__item kit-nav__item--section">
+					<span class="kit-nav__heading">{n.title}</span>
+					<Astro.self nodes={n.children} from={from} depth={depth + 1} />
+				</li>
+			),
+		)
+	}
+</ul>
