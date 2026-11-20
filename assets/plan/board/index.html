@@ -8,11 +8,12 @@
        docs/plan/sprints.json (sprints), the roadmap and the issue snapshot (status). Moving cards saves to
        sprints.json through .docs-kit/bin/serve.sh board (only from the development preview); elsewhere the board is read-only.
        Guide: ../guide.md §5 -->
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="board.css">
   <script>
     (function () {
       var t = null;
-      try { t = localStorage.getItem("docs-kit-board-theme"); } catch (e) {}
+      try { t = localStorage.getItem("docs-kit-board-theme") || localStorage.getItem("kit-theme"); } catch (e) {}  // the docs site's choice when the board has none
       if (!t) t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
       document.documentElement.setAttribute("data-theme", t);
     })();

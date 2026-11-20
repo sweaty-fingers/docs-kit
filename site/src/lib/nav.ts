@@ -242,7 +242,7 @@ export function buildNav(site: Site): Nav {
 	tree.forEach((n, i) => walk([n], i));
 	// MkDocs validation omitted_files: a project page that is in no menu (a tab that is off keeps its pages out on purpose)
 	for (const p of site.pages)
-		if (p.origin === 'project' && !used.has(p.rel) && !p.template && !(p.feature && !enabled(site.cfg, p.feature.id)) && !p.front.kit_hidden)
+		if (p.origin === 'project' && !used.has(p.rel) && !p.template && !(p.feature && !enabled(site.cfg, p.feature.id)))
 			warn('nav', p.rel, 'page is not in the menu (add it to docs-kit.yml nav, or move it into a tab folder)');
 	const nav = { tree, order };
 	cachedNav = { site, nav };

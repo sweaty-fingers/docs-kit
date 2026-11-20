@@ -15,7 +15,7 @@
     // system setting) and keep following it when the reader toggles the page theme.
     (function () {
       var root = document.documentElement, t = null;
-      try { t = localStorage.getItem("docs-kit-c4-theme"); } catch (e) {}
+      try { t = localStorage.getItem("docs-kit-c4-theme") || localStorage.getItem("kit-theme"); } catch (e) {}  // the docs site's choice when the viewer has none
       if (!t) t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
       root.setAttribute("data-theme", t);
       if (!/[?&]embed=1/.test(location.search)) return;

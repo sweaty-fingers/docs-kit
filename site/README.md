@@ -26,7 +26,7 @@ tests/                  node --test
 | M2 Markdown | done: FR-MD-1..13, FR-CORE-1..5 and 7..8, KaTeX, Mermaid with zoom, Pagefind, responsive layout and drawer |
 | M3 tab settings | done: FR-NAV, features.json shared with `kit.py`, `kit.py init` / `migrate`, plain-page tabs, selftest for the five profiles |
 | M4 record tabs | done: ADR (index, log, cards, C4 model checks, viewer data, `c4-view` embeds), records, experiments, arc42, publications, back links; the viewer itself is the kit's standalone page (assets/adr/viewer/, elkjs from npm) |
-| M5 progress tabs | to do: weekly, roadmap, plan + board |
+| M5 progress tabs | done: weekly (checks, index, threads, cards, number links), roadmap (map, item pages, viewer data), plan (every dashboard marker, board data); the roadmap viewer and the board are the kit's standalone pages |
 | M6 grounding, map | to do: quality, graph |
 | M7 migration checks | to do |
 | M8 documents | partly: usage page and standard updated for the new commands |

@@ -42,10 +42,13 @@ function vendorFiles(): Map<string, string> {
 	return m;
 }
 
+/** Data files the tabs read at build time; not published (hooks/roadmap.py, plan.py, graph.py, quality.py). */
+const SOURCES = /^(roadmap\/roadmap\.yml|plan\/(scope|risks)\.yml|plan\/(sprints|issues)\.json|graph\/topics\.yml|quality\/[^/]+\.json)$/;
+
 /** Non-Markdown files of the site: docs/ over the kit's assets/ (minus _kit/), plus vendored libraries. */
 function staticFiles(): Map<string, string> {
 	const m = new Map<string, string>();
-	for (const f of scanFiles().values()) if (!f.rel.toLowerCase().endsWith('.md')) m.set(f.rel, f.abs);
+	for (const f of scanFiles().values()) if (!f.rel.toLowerCase().endsWith('.md') && f.abs && !SOURCES.test(f.rel)) m.set(f.rel, f.abs);
 	for (const [k, v] of vendorFiles()) m.set(k, v);
 	return m;
 }
@@ -110,7 +113,7 @@ export default function kit(): AstroIntegration {
 				}
 				// 2. static files (project first) and vendored libraries
 				for (const [rel, abs] of staticFiles()) {
-					if (KIT_ASSET_SKIP.some((p) => rel.startsWith(p)) && !rel.startsWith('_kit/vendor/')) continue;
+					if (KIT_ASSET_SKIP.some((p) => rel.startsWith(p)) && !vendorFiles().has(rel)) continue;
 					const to = path.join(out, rel);
 					if (fs.existsSync(to)) continue;
 					fs.mkdirSync(path.dirname(to), { recursive: true });
@@ -121,7 +124,7 @@ export default function kit(): AstroIntegration {
 				if (kcfg.site.url) {
 					const root = kcfg.site.url.replace(/\/+$/, '') + base;
 					const urls = scanPages()
-						.filter((p) => !p.template && !(p.origin === 'kit' && p.feature && !enabled(kcfg, p.feature.id)))
+						.filter((p) => !p.template && !p.generated && !(p.origin === 'kit' && p.feature && !enabled(kcfg, p.feature.id)))
 						.map((p) => `  <url><loc>${root}${p.url === 'index.html' ? '' : encodeURI(p.url)}</loc></url>`);
 					fs.writeFileSync(path.join(out, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`);
 				}

@@ -4,6 +4,9 @@
 import { BY_ID, enabled, FEATURES, PROFILES, type KitConfig } from '../config/load.ts';
 import { escapeHtml, type MarkerHandler } from '../markdown/pre.ts';
 import { recordMarkers } from './records.ts';
+import { weeklyMarkers } from './weekly.ts';
+import { roadmapMarkers } from './roadmap.ts';
+import { planMarkers } from './plan.ts';
 
 interface Ctx {
 	page: { rel: string; url: string };
@@ -102,7 +105,7 @@ export function markerHandlers(ctx: Ctx): Record<string, MarkerHandler> {
 		rerun: (args, opts) => (args ? rerunBox(ctx, args.split(/\s+/)[0], opts) : null),
 	};
 	// tabs built so far (M4): their markers come from the tab module when the tab is on
-	const DONE = new Set(['adr', 'records', 'experiments', 'arc42', 'publications']);
+	const DONE = new Set(['adr', 'records', 'experiments', 'arc42', 'publications', 'weekly', 'roadmap', 'plan']);
 	for (const [name, [tab, milestone]] of Object.entries(PENDING)) {
 		if (DONE.has(tab)) {
 			h[name] = () => `<div class="kit-pending">${escapeHtml(BY_ID[tab].title)} 탭이 꺼져 있습니다(<code>.docs-kit/bin/kit.py enable ${tab}</code>).</div>`;
@@ -112,5 +115,5 @@ export function markerHandlers(ctx: Ctx): Record<string, MarkerHandler> {
 			`<div class="kit-pending" data-marker="${name}">표시 줄 <code>&lt;!-- ${name}${args ? ': ' + escapeHtml(args) : ''} --&gt;</code>: ` +
 			`${escapeHtml(BY_ID[tab].title)} 탭의 표·그림은 Astro 판 ${milestone} 단계에서 만들어집니다.</div>`;
 	}
-	return { ...h, ...recordMarkers(ctx.cfg, ctx.page) };
+	return { ...h, ...recordMarkers(ctx.cfg, ctx.page), ...weeklyMarkers(ctx.cfg, ctx.page), ...roadmapMarkers(ctx.cfg, ctx.page), ...planMarkers(ctx.cfg, ctx.page) };
 }

@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.18.0 — 2026-11-20
+
+M5 of the Astro edition: the progress tabs.
+
+- Weekly (`weekly`): report checks (front matter, file name = date, title, `from`, published needs commit, the four
+  bullets of every work item), `weekly-index`, `weekly-threads`, the card under the title, `#12` / `!27` / `VR-0004` links
+- Roadmap (`roadmap`): `roadmap.yml` checks, the transit map, one generated page per item (`roadmap/items/<id>.html`,
+  out of the menu and the sitemap), the viewer's `roadmap/viewer/data.js`, markers `roadmap-map`, `roadmap-units`, `roadmap-table`
+- Dashboard (`plan`): scope / risks / sprints / issue snapshot checks, every `plan-*` and `risk-*` marker (summary, burn-up
+  with forecast, stages, questions, changes, risk summary / PI matrix / top / trend / register, sprint now, sprints with
+  velocity) and the board's `plan/board/data.js`; plan.css and plan.js from the MkDocs edition run unchanged through a
+  compatibility layer (`md-typeset`, `--md-*` variables, `data-md-color-scheme`)
+- Tab modules can add generated pages (no file in `docs/`); tab data files (`roadmap.yml`, `plan/*.yml|json`, …) are not published
+- The roadmap viewer, the C4 viewer and the sprint board follow the docs site's theme when they have no choice of their own
+- selftest: weekly threads and card, roadmap embed / data / item page, PI matrix cell, board card, velocity chart, sources not published
+
 ## 0.17.1 — 2026-11-20
 
 - Record tables: ids (ADR-NNNN, VR-, EXP-, P-) and dates stay on one line instead of breaking at the hyphen

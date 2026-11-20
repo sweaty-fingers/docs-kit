@@ -18,6 +18,7 @@
 		b.addEventListener("click", function () {
 			var next = isDark() ? "light" : "dark";
 			root.dataset.theme = next;
+			root.setAttribute("data-md-color-scheme", next === "dark" ? "slate" : "default");
 			try { localStorage.setItem("kit-theme", next); } catch (e) {}
 			renderMermaid(true);
 		});
@@ -158,7 +159,11 @@
 	renderMermaid(false);
 	if (window.matchMedia) {
 		var mq = window.matchMedia("(prefers-color-scheme: dark)");
-		var onMq = function () { if (!root.dataset.theme) renderMermaid(true); };
+		var onMq = function () {
+			if (root.dataset.theme) return;
+			root.setAttribute("data-md-color-scheme", mq.matches ? "slate" : "default");
+			renderMermaid(true);
+		};
 		if (mq.addEventListener) mq.addEventListener("change", onMq);
 	}
 

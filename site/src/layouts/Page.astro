@@ -61,11 +61,16 @@ const hasMermaid = page.html.includes('class="mermaid"');
 				var t = localStorage.getItem('kit-theme');
 				if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
 			} catch (e) {}
+			// the effective scheme for styles written against MkDocs Material (roadmap.css, plan.css)
+			var d = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+			document.documentElement.setAttribute('data-md-color-scheme', d === 'dark' ? 'slate' : 'default');
 		</script>
 		<link rel="stylesheet" href={`${up}_kit/vendor/pretendard/pretendardvariable-dynamic-subset.css`} />
 		{page.html.includes('<pre') && <link rel="stylesheet" href={`${up}_kit/vendor/jetbrains-mono/index.css`} />}
 		<link rel="stylesheet" href={`${up}_kit/kit.css`} />
 		{hasMath && <link rel="stylesheet" href={`${up}_kit/vendor/katex/katex.min.css`} />}
+		{/class="rm-/.test(page.html) && <link rel="stylesheet" href={`${up}_kit/stylesheets/roadmap.css`} />}
+		{/class="(pl|risk)-/.test(page.html) && <link rel="stylesheet" href={`${up}_kit/stylesheets/plan.css`} />}
 		{cfg.site.extra_css.map((c) => <link rel="stylesheet" href={`${up}${c}`} />)}
 	</head>
 	<body
@@ -148,7 +153,7 @@ const hasMermaid = page.html.includes('class="mermaid"');
 						</details>
 					)
 				}
-				<article class="kit-content" data-pagefind-body={page.template ? undefined : ''}>
+				<article class="kit-content md-typeset" data-pagefind-body={page.template || page.generated ? undefined : ''}>
 					<Fragment set:html={page.html} />
 				</article>
 				{
@@ -211,6 +216,7 @@ const hasMermaid = page.html.includes('class="mermaid"');
 			</div>
 		</div>
 		<script is:inline src={`${up}_kit/kit.js`}></script>
+		{/class="(pl|risk)-/.test(page.html) && <script is:inline src={`${up}_kit/javascripts/plan.js`}></script>}
 		{cfg.site.extra_js.map((s) => <script is:inline src={`${up}${s}`}></script>)}
 	</body>
 </html>

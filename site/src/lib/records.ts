@@ -583,7 +583,7 @@ export function recordCard(cfg: KitConfig, page: { rel: string; url: string }): 
 
 /** Pages whose rendering depends on other record files (cards, indexes): rendered on every build. */
 export function isRecordPage(rel: string): boolean {
-	return /^(adr|records|experiments|arc42|publications)\//.test(rel);
+	return /^(adr|records|experiments|arc42|publications|weekly)\//.test(rel);
 }
 
 // ---------------------------------------------------------------- C4 viewer data (adr/viewer/data.json)

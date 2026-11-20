@@ -77,6 +77,22 @@
 	color-scheme: dark;
 }
 
+/* ---- compatibility with the MkDocs edition's styles (roadmap.css, plan.css reused as they are) ---- */
+:root {
+	--md-default-bg-color: var(--kit-bg);
+	--md-default-fg-color: var(--kit-fg);
+	--md-default-fg-color--light: var(--kit-muted);
+	--md-default-fg-color--lighter: var(--kit-faint);
+	--md-default-fg-color--lightest: var(--kit-border);
+	--md-accent-fg-color: var(--kit-accent);
+	--md-primary-fg-color: var(--kit-fg);
+	--md-code-bg-color: var(--kit-code-bg);
+	--md-typeset-a-color: var(--kit-link);
+	--vt-border: var(--kit-border);
+	--vt-subtle: var(--kit-subtle);
+	--vt-muted: var(--kit-muted);
+}
+
 /* ---- base ------------------------------------------------------------- */
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--kit-header-h) + var(--kit-tabs-h) + 16px); }
@@ -265,6 +281,9 @@ img { max-width: 100%; height: auto; }
 .kit-table td { border-top: 1px solid var(--kit-border); }
 .kit-table tr:first-child td { border-top: 0; }
 .kit-table td code { white-space: nowrap; }
+/* the dashboard's PI matrix is a grid of cells, not a data table (plan.css) */
+.kit-table:has(> table.pl-pi) { border: 0; overflow: visible; }
+.kit-table table.pl-pi { width: auto; }
 .kit-nowrap { white-space: nowrap; }
 
 /* code: Shiki dual themes, copy button added by kit.js */

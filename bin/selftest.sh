@@ -72,6 +72,7 @@ S="$P/build/site"
 for f in index.html docs-kit.html docs-standard.html adr/index.html adr/log.html adr/c4.html adr/guide.html \
          adr/0001-record-architecture-decisions.html adr/viewer/index.html adr/viewer/vendor/elk.bundled.js r/home/index.html \
          experiments/list.html weekly/index.html weekly/threads.html weekly/2026-01-12.html roadmap/index.html roadmap/guide.html \
+         roadmap/items/ab.html roadmap/viewer/index.html roadmap/viewer/data.js plan/board/index.html plan/board/data.js \
          graph/index.html plan/index.html plan/guide.html plan/sprints.html quality/index.html glossary/index.html guides/g2_markdown.html \
          _kit/kit.css _kit/kit.js _kit/vendor/mermaid/mermaid.esm.min.mjs _kit/vendor/katex/katex.min.css _kit/vendor/pretendard/pretendardvariable-dynamic-subset.css \
          _kit/vendor/jetbrains-mono/index.css _kit/pagefind/pagefind.js; do
@@ -130,6 +131,33 @@ print(" ".join(k for k, v in checks.items() if not v))
 PY
 )"
 [[ -z "$rec" ]] || fail "record tabs not as expected: $rec"
+# progress tabs (M5): weekly threads and cards, the roadmap map / item pages, the dashboard and the board
+prog="$(python3 - "$S" <<'PY'
+import os, re, sys
+S = sys.argv[1]
+def art(p):
+    h = open(f"{S}/{p}", encoding="utf-8").read()
+    return h[h.find("<article"):h.find("</article>")]
+rm = open(f"{S}/roadmap/viewer/data.js", encoding="utf-8").read()
+board = open(f"{S}/plan/board/data.js", encoding="utf-8").read()
+plan = art("plan/index.html")
+checks = {
+    "weekly threads": len(set(re.findall(r'href="(2026-01-\d\d)\.html#', art("weekly/threads.html")))) == 2,
+    "weekly card": "kit-card" in art("weekly/2026-01-12.html") and "threads.html" in art("weekly/2026-01-12.html"),
+    "weekly index": "2026-01-05 ~ 2026-01-12" in art("weekly/index.html"),
+    "roadmap embed": "rm-embed" in art("roadmap/index.html"),
+    "roadmap data": rm.startswith("window.ROADMAP = {") and "rm-merge" in rm and '"kind":"adr"' in rm,
+    "roadmap item": "첫째" in art("roadmap/items/ab.html") and "둘째" in art("roadmap/items/ab.html"),
+    "plan burn-up": 'class="pl-svg"' in plan and 'id="ep-e1"' in plan,
+    "plan PI cell": 'data-rval="4,5"><span class="pl-pi-s">20</span><a href="#r01"' in plan,
+    "board card": board.startswith("window.PLAN_BOARD = {") and '"id":"W1"' in board,
+    "velocity": "pl-vel" in art("plan/sprints.html"),
+    "sources not published": not any(os.path.exists(f"{S}/{p}") for p in ("plan/scope.yml", "plan/risks.yml", "plan/sprints.json", "roadmap/roadmap.yml")),
+}
+print(" ".join(k for k, v in checks.items() if not v))
+PY
+)"
+[[ -z "$prog" ]] || fail "progress tabs not as expected: $prog"
 # ---- 4. ask (bin/docs_ask.py): the per-sentence citation check (host Python, no model needed)
 ask="$(python3 - "$KIT/bin" <<'PY'
 import sys; sys.path.insert(0, sys.argv[1]); import docs_ask as a

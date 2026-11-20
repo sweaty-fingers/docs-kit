@@ -12,11 +12,15 @@ import { markerHandlers } from './markers.ts';
 import { warn } from './warnings.ts';
 import { finishLinks } from './links.ts';
 import { isRecordPage, recordCard } from './records.ts';
+import { weeklyPage } from './weekly.ts';
+import { generatedPages } from './roadmap.ts';
 
 export interface SourceFile {
 	rel: string; // path under docs/ (or the kit's assets/), "/" separated
 	abs: string;
 	origin: 'project' | 'kit';
+	/** Markdown of a page a tab module generates (no file in docs/): roadmap/items/<id>.md */
+	text?: string;
 }
 
 export interface Page extends SourceFile {
@@ -29,6 +33,7 @@ export interface Page extends SourceFile {
 	headings: Heading[];
 	links: { href: string }[];
 	template: boolean;
+	generated: boolean;
 	hide: string[];
 }
 
@@ -54,6 +59,7 @@ export function scanFiles(): Map<string, SourceFile> {
 		files.set(rel, { rel, abs: path.join(ASSETS_DIR, rel), origin: 'kit' });
 	}
 	for (const rel of walk(DOCS_DIR)) files.set(rel, { rel, abs: path.join(DOCS_DIR, rel), origin: 'project' });
+	for (const [rel, text] of generatedPages(loadConfig())) if (!files.has(rel)) files.set(rel, { rel, abs: '', origin: 'kit', text });
 	return files;
 }
 
@@ -86,7 +92,10 @@ export function scanPages(): Omit<Page, 'front' | 'title' | 'html' | 'headings' 
 			warn('kit', f.rel, `both ${prev.rel} and ${f.rel} make ${url}; using ${keep}`);
 			if (keep === prev.rel) continue;
 		}
-		byUrl.set(url, { ...f, url, slug: slugOf(url), feature: featureOf(f.rel), template: /(^|\/)template\.md$/.test(f.rel) || /(^|\/)_template\.md$/.test(f.rel) });
+		byUrl.set(url, {
+			...f, url, slug: slugOf(url), feature: featureOf(f.rel), generated: f.text !== undefined,
+			template: /(^|\/)template\.md$/.test(f.rel) || /(^|\/)_template\.md$/.test(f.rel),
+		});
 	}
 	return [...byUrl.values()];
 }
@@ -111,11 +120,11 @@ function readSnippetFactory(files: Map<string, SourceFile>) {
 }
 
 async function renderPage(p: ReturnType<typeof scanPages>[number], files: Map<string, SourceFile>, cfg: KitConfig, cfgKey: string): Promise<Page> {
-	const stat = fs.statSync(p.abs);
+	const stat = p.text === undefined ? fs.statSync(p.abs) : { mtimeMs: 0, size: p.text.length };
 	const key = `${stat.mtimeMs}:${stat.size}:${cfgKey}`;
 	const hit = cache.get(p.rel);
-	if (hit && hit.key === key) return hit.page;
-	const text = fs.readFileSync(p.abs, 'utf-8').replace(/\r\n/g, '\n');
+	if (hit && hit.key === key && p.text === undefined) return hit.page;
+	const text = (p.text ?? fs.readFileSync(p.abs, 'utf-8')).replace(/\r\n/g, '\n');
 	// Pages that pull in other files (snippets) or show generated tables (markers) depend on more than their own
 	// file: render them every time.
 	const dynamic = text.includes('--8<--') || /^[ \t]*<!--\s*[a-z][a-z0-9-]*(:[^>]*)?-->[ \t]*$/m.test(text) || isRecordPage(p.rel);
@@ -139,6 +148,8 @@ async function renderPage(p: ReturnType<typeof scanPages>[number], files: Map<st
 	if (!hasH1 && front.title) md = `# ${front.title}\n\n${md}`;
 	md = snippets(md, readSnippetFactory(files), (what) => warn('snippets', p.rel, what));
 	md = markers(md, markerHandlers({ page: p, cfg }));
+	// weekly reports: number links and the card (hooks/weekly.py)
+	md = weeklyPage(cfg, p, md) ?? md;
 	// record pages (ADR, VR, EXP, arc42, P): the card under the title (hooks/<tab>.py)
 	const cardHtml = recordCard(cfg, p);
 	if (cardHtml) {
@@ -175,6 +186,10 @@ function fingerprint(files: Map<string, SourceFile>): string {
 	let n = 0;
 	let t = 0;
 	for (const f of files.values()) {
+		if (f.text !== undefined) {
+			n += f.text.length;
+			continue;
+		}
 		try {
 			const s = fs.statSync(f.abs);
 			t += s.mtimeMs % 1e9;
