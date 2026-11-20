@@ -8,11 +8,13 @@ astro.config.mjs        static output to <project>/build/site, base from docs-ki
 src/config/             paths.ts (kit, project, output), load.ts (docs-kit.yml + zod, mkdocs.yml fallback), features.json
 src/markdown/           pre.ts (pymdownx-compatible source passes), pipeline.ts (unified: GFM, KaTeX, Shiki, anchors, links)
 src/lib/                site.ts (docs/ over assets/, render, cache), links.ts (§ links, checks), nav.ts (menu), markers.ts,
-                        records.ts (ADR + C4, VR, EXP, arc42, P), warnings.ts
+                        warnings.ts; tab modules records.ts (ADR + C4, VR, EXP, arc42, P), weekly.ts, roadmap.ts,
+                        plan.ts, graph.ts, quality.ts
 src/layouts/Page.astro  header, tab row, sidebar, page, "이 페이지", previous / next, drawer, search
-src/pages/              [...slug].astro (every page), r/[name].astro (short addresses), adr/viewer/data.json.ts, 404.astro
-src/integration.ts      dev: watch + static files; build: README pages → a/index.html, static files, vendor, Pagefind,
-                        warning summary
+src/pages/              [...slug].astro (every page), r/[name].astro (short addresses), 404.astro, viewer data:
+                        adr/viewer/data.json.ts, roadmap/viewer/data.js.ts, plan/board/data.js.ts, graph/viewer/data.js.ts
+src/integration.ts      dev: watch + static files; build: README pages → a/index.html, static files, vendor, off-tab viewer
+                        data removed, sitemap, Pagefind, warning summary
 public/_kit/            kit.css, kit.js (no dependencies)
 tests/                  node --test
 ```
@@ -29,7 +31,7 @@ tests/                  node --test
 | M5 progress tabs | done: weekly (checks, index, threads, cards, number links), roadmap (map, item pages, viewer data), plan (every dashboard marker, board data); the roadmap viewer and the board are the kit's standalone pages |
 | M6 grounding, map | done: quality (runs bin/docs_check.py with the host Python, report cached in build/quality/), graph (links from the finished pages, relations, similarity, topics; viewer data) |
 | M7 migration checks | done except hand checks on real phones and the touch parts of FR-UI-7 (see below) |
-| M8 documents | partly: usage page and standard updated for the new commands |
+| M8 documents | done: docs-kit-context.md is the Astro edition's spec (assembly §4, common features §7, tests §11, rebuild order §12), README / prd.md status "implemented"; check: `docs_check.py` over every kit document (copied into a scratch project with the kit) finds all 70 `.docs-kit/bin/...` command / option claims and 79 kit paths (2026-11-21) |
 
 ## M7 verification (2026-11-21)
 

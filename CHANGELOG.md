@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.21.0 — 2026-11-21
+
+M8 of the Astro edition: documents. prd.md is now "implemented" (M0-M8; open items in site/README.md).
+
+- docs-kit-context.md describes the Astro edition: environment and repository layout (§3), how the site is assembled —
+  reading and overlay, the Markdown passes, tabs and menu, screen (§4), common features (§7), tools incl. `site_diff.py`
+  and `compare_editions.sh` (§8), tests (§11), rebuild order (§12)
+- README: hooks/ and mkdocs.base.yml marked as reference only (the site does not use them; kit.py still reads hooks/kitconf.py)
+- site/README.md: file map with every tab module and viewer data endpoint
+- Checked: every `.docs-kit/bin/...` command and option written in the kit's documents exists (docs_check.py option kind)
+
 ## 0.20.0 — 2026-11-21
 
 M7 of the Astro edition: migration and verification (results in site/README.md "M7 verification").

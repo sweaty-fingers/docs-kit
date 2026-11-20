@@ -11,7 +11,7 @@
 | 이 README | 사람 | 에이전트에게 줄 지시문(§1), 직접 세우는 법, 구조 |
 | [AGENTS-GUIDE.md](AGENTS-GUIDE.md) | 에이전트 | 세우기·들이기 절차, 묻기, 제안서 형식, AGENTS.md에 넣을 것, 운영 중 요청 |
 | [template/agents/AGENTS.docs-kit.md](template/agents/AGENTS.docs-kit.md) | 에이전트 | 프로젝트 AGENTS.md에 넣을 "문서 관리 (docs-kit)" 절 |
-| [docs-kit-context.md](docs-kit-context.md) | 에이전트 | 키트의 전체 명세(탭별 형식, 도구, 시험). 사이트 부분은 MkDocs 판 기준이며 Astro 판은 [site/README.md](site/README.md)와 [decisions/](decisions/) |
+| [docs-kit-context.md](docs-kit-context.md) | 에이전트 | 키트의 전체 명세(사이트 조립, 탭별 형식, 도구, 시험). 엔진 코드 구조와 검증 결과는 [site/README.md](site/README.md), 결정은 [decisions/](decisions/) |
 | [prd.md](prd.md) | 에이전트 | 키트를 처음부터 다시 만드는 제품 요구사항(사이트 엔진은 Astro): 목표, 구조, 기능 요구사항과 수용 기준, 구현 순서 |
 | `assets/docs-standard.md` | 모두 | 문서 규격 (사이트 메뉴 "문서 규격") |
 | `assets/docs-kit.md` | 모두 | 사이트 사용법 (사이트 메뉴 "문서 사이트 사용법") |
@@ -93,7 +93,7 @@ docs-kit을 먼저 push하고 이 프로젝트의 .docs-kit을 갱신하는 것�
 
 ```text
 docs-kit 저장소의 prd.md를 읽고 docs-kit을 Astro 기반으로 처음부터 구현해 줘.
-- 동작의 세부 기준은 docs-kit-context.md와 지금 저장소의 코드(MkDocs 판)야. 문서 형식, 템플릿,
+- 동작의 세부 기준은 docs-kit-context.md와 지금 저장소의 코드야(MkDocs 판은 태그 v0.15.4). 문서 형식, 템플릿,
   호스트 도구(bin/*.py), 에이전트 문서는 그대로 가져다 쓰고 사이트 엔진만 새로 만들어.
 - 먼저 prd.md §12 열린 질문(Astro·Node 버전, 아일랜드 방식, 검색, 문서 밖 읽기)을 확인해서
   근거와 함께 제안하고, 내가 승인하면 §11 구현 순서대로 진행해. 단계마다 끝 기준을 통과시키고 보고해.
@@ -149,7 +149,7 @@ git add .docs-kit && git commit -m "docs-kit <버전>"
 | `site/src/config/features.json` | 탭 목록, 묶음, 기본 분야 (`kit.py`와 사이트가 함께 읽음) |
 | `docker/` | 사이트 이미지(Node + 사이트 패키지)와 진입 스크립트 |
 | `decisions/` | 키트의 큰 결정 기록 |
-| `hooks/`, `mkdocs.base.yml` | MkDocs 판의 훅(탭별 동작의 기준, M4~M6에서 `site/`로 옮기는 중). `hooks/kitconf.py`는 `kit.py`가 씀 |
+| `hooks/`, `mkdocs.base.yml` | MkDocs 판의 훅과 설정(참고용, 사이트는 쓰지 않음; 탭 모듈은 `site/src/lib/`). `hooks/kitconf.py`는 `kit.py`가 씀 |
 | `assets/` | 사이트에 들어가는 키트 페이지·뷰어·스타일 (`assets/<탭>/`, `_kit/`, `docs-standard.md`, `docs-kit.md`) |
 | `template/base/`, `template/features/<id>/` | `kit.py init`·`enable`이 복사하는 시작 파일 |
 | `template/agents/AGENTS.docs-kit.md` | 프로젝트 AGENTS.md에 넣을 절 |
