@@ -22,8 +22,8 @@ How to use it: .docs-kit/AGENTS-GUIDE.md §4.
 
     | 점검 결과 | 할 일 |
     | --- | --- |
-    | `docs-kit has uncommitted changes` / `not on origin/main` | 이전 세션의 docs-kit 작업이 끝나지 않음. D6 절차를 마무리할지 사용자에게 묻습니다 |
-    | `newer docs-kit on origin/main` | 다른 프로젝트에서 키트가 갱신됨. `.docs-kit/bin/kit.py update`를 제안하고, 동의하면 실행 → 빌드 경고 0 → `.docs-kit` 커밋(사용자 요청 시) |
+    | `docs-kit has uncommitted changes` / `not on origin/<브랜치>` | 이전 세션의 docs-kit 작업이 끝나지 않음. D6 절차를 마무리할지 사용자에게 묻습니다 |
+    | `newer docs-kit on origin/<브랜치>` | 다른 프로젝트에서 키트가 갱신됨. `.docs-kit/bin/kit.py update`를 제안하고, 동의하면 실행 → 빌드 경고 0 → `.docs-kit` 커밋(사용자 요청 시) |
     | `tabs on without files` | 켠 탭의 시작 파일이 없음. `.docs-kit/bin/kit.py enable <id>`로 복사 |
     | `no docs-kit.yml` | 탭 설정이 없음. 사용자와 묶음을 정해 `kit.py init` 또는 `docs-kit.yml` 작성 |
 
@@ -87,9 +87,9 @@ python3 .docs-kit/bin/docs_check.py --changed                  # [탭: quality] 
 **여러 프로젝트가 같이 쓰는 것**(문서 규격, 템플릿, 가이드, 훅, 뷰어, 사이트 모양, 탭, `bin/` 도구)은 이 프로젝트의 `docs/`가 아니라 docs-kit 저장소에서 고칩니다. 그래야 다음 프로젝트가 최신 키트를 받습니다. 프로젝트에만 해당하는 내용(이름, 경로, 실제 값, 예시)은 키트에 넣지 않습니다.
 
 1. **새 탭이 필요하면 먼저 있는 탭을 찾습니다**: `.docs-kit/bin/kit.py status`. 같은 일을 하는 탭이 있으면 `kit.py enable <id>`로 켜고 끝. 없을 때만 키트에 새 탭을 만듭니다(`.docs-kit/AGENTS-GUIDE.md` §6).
-2. `.docs-kit`이 `main` 브랜치인지 확인합니다(분리된 HEAD면 `git -C .docs-kit checkout -B main`, `origin/main`과 같을 때만).
+2. `.docs-kit`이 따라가는 브랜치(`.gitmodules`의 `branch`, Astro 판은 `astro`)인지 확인합니다(분리된 HEAD면 `git -C .docs-kit checkout -B <브랜치> origin/<브랜치>`, 같은 커밋일 때만).
 3. 고치고, `VERSION`을 올리고(형식 추가 = 마이너, 고침 = 패치), `CHANGELOG.md` 맨 위에 항목, 바뀐 동작은 `docs-kit-context.md`에도 반영합니다.
-4. `.docs-kit/bin/selftest.sh` → `selftest OK`. 미리보기는 훅을 시작할 때만 읽으므로 `stop` 후 `start`로 다시 켜서 화면을 확인합니다.
+4. `.docs-kit/bin/selftest.sh` → `selftest OK`. 미리보기는 키트의 `site/` 코드를 시작할 때만 읽으므로 `stop` 후 `start`로 다시 켜서 화면을 확인합니다.
 5. docs-kit 커밋 → **docs-kit 먼저 push** → 프로젝트에서 `git add .docs-kit`(+ 새 형식으로 옮긴 문서) 커밋 → push. 기존 문서를 새 형식으로 옮겼으면 같은 프로젝트 커밋에 넣습니다(내용은 바꾸지 않음, ADR이면 "형식 정리").
 6. 프로젝트 저장소가 `submodule.recurse=true`면 push는 `git push --recurse-submodules=no`로 합니다.
 

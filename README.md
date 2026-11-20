@@ -11,7 +11,7 @@
 | 이 README | 사람 | 에이전트에게 줄 지시문(§1), 직접 세우는 법, 구조 |
 | [AGENTS-GUIDE.md](AGENTS-GUIDE.md) | 에이전트 | 세우기·들이기 절차, 묻기, 제안서 형식, AGENTS.md에 넣을 것, 운영 중 요청 |
 | [template/agents/AGENTS.docs-kit.md](template/agents/AGENTS.docs-kit.md) | 에이전트 | 프로젝트 AGENTS.md에 넣을 "문서 관리 (docs-kit)" 절 |
-| [docs-kit-context.md](docs-kit-context.md) | 에이전트 | 지금 키트(MkDocs 판)의 전체 명세: 구조, 탭별 형식, 훅, 도구, 시험 |
+| [docs-kit-context.md](docs-kit-context.md) | 에이전트 | 키트의 전체 명세(탭별 형식, 도구, 시험). 사이트 부분은 MkDocs 판 기준이며 Astro 판은 [site/README.md](site/README.md)와 [decisions/](decisions/) |
 | [prd.md](prd.md) | 에이전트 | 키트를 처음부터 다시 만드는 제품 요구사항(사이트 엔진은 Astro): 목표, 구조, 기능 요구사항과 수용 기준, 구현 순서 |
 | `assets/docs-standard.md` | 모두 | 문서 규격 (사이트 메뉴 "문서 규격") |
 | `assets/docs-kit.md` | 모두 | 사이트 사용법 (사이트 메뉴 "문서 사이트 사용법") |
@@ -21,7 +21,7 @@
 
 ## 1. 에이전트에게 줄 지시문 (복사해 붙여 넣기)
 
-`<docs-kit 저장소 URL>`을 이 저장소 주소로 바꿔 씁니다. 모두 **제안 → 사용자 승인 → 작업** 순서입니다.
+`<docs-kit 저장소 URL>`은 `https://github.com/sweaty-fingers/docs-kit`입니다. 사이트 엔진이 Astro인 판은 **`astro` 브랜치**에 있으므로(main은 MkDocs 판, prd.md §11 전환 방법) 서브모듈은 `git submodule add -b astro <URL> .docs-kit`로 넣습니다. 모두 **제안 → 사용자 승인 → 작업** 순서입니다.
 
 ### 1.1 새 프로젝트를 docs-kit으로 시작할 때
 
@@ -104,19 +104,21 @@ docs-kit 저장소의 prd.md를 읽고 docs-kit을 Astro 기반으로 처음부�
 
 ## 2. 사람이 직접 세우기
 
-호스트에 필요한 것은 Docker, git, Python 3.8 이상뿐입니다.
+호스트에 필요한 것은 git, Python 3.8 이상, 그리고 Docker **또는** Node 22.18 이상(`DOCS_RUNNER=host`)입니다. Docker를 쓰면 처음 한 번 사이트 이미지를 만들 때만 네트워크(또는 사내 미러)가 필요합니다.
 
 ```bash
 cd <프로젝트 루트>
-git submodule add <docs-kit 저장소 URL> .docs-kit
+git submodule add -b astro https://github.com/sweaty-fingers/docs-kit.git .docs-kit
 .docs-kit/bin/kit.py init --name "프로젝트 이름" --profile dev   # minimal | app | dev | research | all
 .docs-kit/bin/docs.sh build 2>&1 | grep -iE "warn|error"         # 아무것도 안 나와야 함
 .docs-kit/bin/docs.sh start                                       # http://localhost:8000/
-git add .gitmodules .docs-kit docs-kit.yml mkdocs.yml docs .gitignore
+git add .gitmodules .docs-kit docs-kit.yml docs .gitignore
 git commit -m "Add docs site (docs-kit)"
 ```
 
-`init`은 `template/base/`(mkdocs.yml, docs-kit.yml, docs/README.md)와 켠 탭의 시작 파일(`template/features/<id>/`)을 복사합니다. 있는 파일은 건드리지 않습니다. 이후:
+설정 파일은 `docs-kit.yml` 하나입니다: 켤 탭(`profile`, `features`), 분야(`areas`), 사이트(`site.name`, `site.issues_url`, 하위 경로 배포면 `site.base`), 짧은 주소(`links`), 메뉴를 직접 정할 때만 `nav`. 배포는 프로젝트가 정합니다(`build/site/`는 정적 파일; GitHub Pages 예: 서브모듈을 받고 `DOCS_RUNNER=host .docs-kit/bin/docs.sh build --strict` 후 `build/site` 업로드).
+
+`init`은 `template/base/`(docs-kit.yml, docs/README.md)와 켠 탭의 시작 파일(`template/features/<id>/`)을 복사합니다. 있는 파일은 건드리지 않습니다. 이후:
 
 ```bash
 .docs-kit/bin/kit.py status                 # 탭 상태
@@ -125,7 +127,7 @@ git commit -m "Add docs site (docs-kit)"
 .docs-kit/bin/kit.py profile research       # 묶음 바꾸기
 ```
 
-이미 MkDocs 사이트가 있는 프로젝트는 `mkdocs.yml` 맨 위에 `INHERIT: .docs-kit/mkdocs.base.yml`을 넣고 키트와 겹치는 설정(theme, markdown_extensions, hooks, extra_css, extra_javascript)을 지운 뒤 `kit.py init`을 실행합니다(있는 파일은 그대로 둠).
+docs-kit MkDocs 판(0.15)을 쓰던 프로젝트는 `.docs-kit/bin/kit.py migrate`로 `mkdocs.yml`의 사이트 설정(이름, 트래커 주소, 짧은 주소, Rerun, nav)을 `docs-kit.yml`로 옮깁니다. 다른 문서 사이트(Starlight, MkDocs 등)가 있던 프로젝트는 AGENTS-GUIDE §3대로 문서를 탭 폴더로 옮깁니다(형식만).
 
 ## 3. 받기와 갱신
 
@@ -133,7 +135,7 @@ git commit -m "Add docs site (docs-kit)"
 git clone --recurse-submodules <프로젝트 저장소>
 git submodule update --init                 # .docs-kit/이 비어 있을 때
 .docs-kit/bin/kit.py check --fetch          # 키트 상태: 고치다 만 것, push 안 된 것, 새 버전
-.docs-kit/bin/kit.py update                 # origin/main으로 갱신하고 바뀐 점(CHANGELOG)을 보여 줌
+.docs-kit/bin/kit.py update                 # 따라가는 브랜치(astro 판: astro)의 최신으로 갱신하고 바뀐 점(CHANGELOG)을 보여 줌
 git add .docs-kit && git commit -m "docs-kit <버전>"
 ```
 
@@ -143,12 +145,11 @@ git add .docs-kit && git commit -m "docs-kit <버전>"
 
 | 경로 | 역할 |
 | --- | --- |
-| `mkdocs.base.yml` | 프로젝트가 `INHERIT`하는 기본 설정 (테마, 확장, 훅 순서, CSS·JS) |
-| `hooks/kitconf.py` | 탭 목록(`FEATURES`), 묶음(`PROFILES`), 기본 분야, `docs-kit.yml` 읽기, 꺼진 탭의 훅을 멈추는 `gate()` |
-| `hooks/kit.py` | 첫 훅: 키트 페이지·파일을 빌드에 더함, 탭 설정 적용, 일반 탭(가이드·참고 등) 메뉴, `<!-- kit-features -->` |
-| `hooks/kit_nav.py` | 마지막 훅: 훅이 더한 탭을 규격 순서로 |
-| `hooks/<탭>.py` | adr, arc42, publications, experiments, records, weekly, roadmap, graph, plan, quality |
-| `hooks/section_links.py`, `lists.py`, `links.py`, `rerun_embed.py` | 절 참조 링크, 목록 바로잡기, 짧은 주소·서버 링크, Rerun 기록 상자 |
+| `site/` | 사이트 엔진(Astro): 설정 읽기, 문서 겹치기, Markdown 호환, 메뉴, 화면, 검색. 구조와 단계별 진행은 [site/README.md](site/README.md) |
+| `site/src/config/features.json` | 탭 목록, 묶음, 기본 분야 (`kit.py`와 사이트가 함께 읽음) |
+| `docker/` | 사이트 이미지(Node + 사이트 패키지)와 진입 스크립트 |
+| `decisions/` | 키트의 큰 결정 기록 |
+| `hooks/`, `mkdocs.base.yml` | MkDocs 판의 훅(탭별 동작의 기준, M4~M6에서 `site/`로 옮기는 중). `hooks/kitconf.py`는 `kit.py`가 씀 |
 | `assets/` | 사이트에 들어가는 키트 페이지·뷰어·스타일 (`assets/<탭>/`, `_kit/`, `docs-standard.md`, `docs-kit.md`) |
 | `template/base/`, `template/features/<id>/` | `kit.py init`·`enable`이 복사하는 시작 파일 |
 | `template/agents/AGENTS.docs-kit.md` | 프로젝트 AGENTS.md에 넣을 절 |
@@ -159,7 +160,7 @@ git add .docs-kit && git commit -m "docs-kit <버전>"
 
 절차는 [AGENTS-GUIDE.md](AGENTS-GUIDE.md) §7입니다. 요약:
 
-1. 이 저장소의 `main`에서 고칩니다. 프로젝트 고유 내용(이름, 경로, 실제 값, 예시)을 넣지 않습니다. 화면 문구는 한국어, 코드 주석은 영어.
-2. `bin/selftest.sh` → `selftest OK` (템플릿으로 전체 탭 프로젝트와 minimal 프로젝트를 만들어 빌드, 탭 켜기·끄기, 뷰어 데이터, 외부 스크립트 없음, 인용 점검).
-3. 쓰고 있는 프로젝트 하나에서 화면을 확인합니다(훅을 고쳤으면 미리보기 서버를 다시 켬).
+1. 이 저장소의 `astro` 브랜치(Astro 판)에서 고칩니다. 프로젝트 고유 내용(이름, 경로, 실제 값, 예시)을 넣지 않습니다. 화면 문구는 한국어, 코드 주석은 영어.
+2. `bin/selftest.sh` → `selftest OK` (단위 시험, 묶음 5개 빌드와 탭 순서, minimal 프로젝트의 탭 켜기·끄기, Markdown 고정 입력, 외부 스크립트 없음, `migrate`, 인용 점검).
+3. 쓰고 있는 프로젝트 하나에서 화면을 확인합니다(`site/` 코드를 고쳤으면 미리보기 서버를 다시 켬).
 4. `VERSION`, `CHANGELOG.md`, 바뀐 동작은 `docs-kit-context.md`에 반영하고 커밋 → push(키트 먼저) → 프로젝트의 `.docs-kit` 갱신.

@@ -57,8 +57,8 @@ docs-kit으로 프로젝트 문서를 세우고 운영하는 **에이전트**(Cl
 | 2 | 성격은 연구, 개발, 당장 쓸 앱 중 무엇에 가깝나요? 기간과 인원은? | 묶음 |
 | 3 | 정기 회의(주간 보고)가 있나요? 일정·범위·리스크를 관리해야 하나요? | weekly, plan |
 | 4 | 실험·평가를 하나요? 실행해서 확인한 결과를 증거로 남겨야 하나요? | experiments, records, models |
-| 5 | 이슈 트래커는 무엇이고 주소는? 마일스톤(업무 단위)이 있나요? | `extra.issues_url`, 업무 이름, 이슈 스냅숏 |
-| 6 | 문서 사이트를 팀에 공유하나요? (공유 주소·포트) | 포트, 공유 주소 |
+| 5 | 이슈 트래커는 무엇이고 주소는? 마일스톤(업무 단위)이 있나요? | `site.issues_url`, 업무 이름, 이슈 스냅숏 |
+| 6 | 문서 사이트를 팀에 공유하나요? 어디에 배포하나요? (사내 서버 주소·포트, GitHub Pages 등) | 포트, 공유 주소, `site.base`, 배포 방법 |
 | 7 | 큰 파일(데이터, 모델, 이미지)을 어디에 두나요? | 보관소 경로 규칙 |
 | 8 | 결정 분야(ADR `area`)는 무엇으로 나눌까요? (예: 구조, 데이터, 배포) | `areas` |
 | 9 | 지금 정해진 계획(단계, 마일스톤)이 있나요? | 로드맵 트랙·업무, 현황판 Epic |
@@ -70,16 +70,16 @@ docs-kit으로 프로젝트 문서를 세우고 운영하는 **에이전트**(Cl
 ### 2.3 승인 뒤 실행
 
 ```bash
-git submodule add <docs-kit 저장소 URL> .docs-kit
+git submodule add -b astro <docs-kit 저장소 URL> .docs-kit   # Astro 판 (README §1)
 .docs-kit/bin/kit.py init --name "<프로젝트 이름>" --profile <묶음>   # 있는 파일은 건드리지 않음
 .docs-kit/bin/kit.py enable <더 켤 탭> ; .docs-kit/bin/kit.py disable <끌 탭>
 ```
 
-1. `docs-kit.yml`의 `areas`, `mkdocs.yml`의 `site_name`·`extra.issues_url`을 승인한 값으로 고칩니다.
+1. `docs-kit.yml`의 `areas`, `site.name`·`site.issues_url`(하위 경로에 배포하면 `site.base`)을 승인한 값으로 고칩니다. 배포가 필요하면 프로젝트 쪽 배포 스크립트·CI를 만듭니다(`docs.sh build --strict` → `build/site/`).
 2. 시작 파일의 예시(로드맵 트랙·항목, 현황판 Epic, 리스크 R01, README)를 답에서 받은 내용으로 바꿉니다. 모르는 것은 `<...>`로 남기지 말고 비우거나 "정하지 않음"이라고 씁니다. 지어내지 않습니다.
 3. AGENTS.md를 만듭니다(§5). 도구별 파일(Claude Code는 `CLAUDE.md`에 `@AGENTS.md` 한 줄)도 둡니다.
 4. 확인: `.docs-kit/bin/docs.sh build 2>&1 | grep -iE "warn|error"` → 없음, `.docs-kit/bin/kit.py check` → `WARN` 없음, `.docs-kit/bin/docs.sh start`로 사용자에게 주소를 알림.
-5. 커밋은 사용자가 요청할 때만: `git add .gitmodules .docs-kit docs-kit.yml mkdocs.yml docs .gitignore AGENTS.md CLAUDE.md`.
+5. 커밋은 사용자가 요청할 때만: `git add .gitmodules .docs-kit docs-kit.yml docs .gitignore AGENTS.md CLAUDE.md`.
 
 ---
 
@@ -105,7 +105,7 @@ git submodule add <docs-kit 저장소 URL> .docs-kit
 
 ### 3.3 승인 뒤 실행
 
-1. §2.3의 1~5와 같되, `init`은 있는 파일을 건드리지 않으므로 기존 `mkdocs.yml`이 있으면 맨 위에 `INHERIT: .docs-kit/mkdocs.base.yml`을 넣고 키트와 겹치는 설정(theme, markdown_extensions, hooks, extra_css, extra_javascript)을 지웁니다. 남겨야 하면 목록은 통째로 바뀌므로 키트의 항목을 함께 적습니다.
+1. §2.3의 1~5와 같습니다. docs-kit MkDocs 판을 쓰던 프로젝트면 `kit.py migrate`로 `mkdocs.yml` 설정을 `docs-kit.yml`로 옮깁니다. 다른 사이트 생성기(Starlight, MkDocs, Docusaurus 등)의 설정·컴포넌트 문법(`:::note`, MDX 컴포넌트)은 키트 문법(`!!! note`, `===` 탭)으로 바꾸고, 그 생성기 파일은 승인 뒤 지웁니다.
 2. 대응표 순서로 옮기고, 묶음마다 빌드 경고 0을 확인합니다(`git mv`로 이력을 남김).
 3. 기존 AGENTS.md가 있으면 프로젝트 고유 규칙은 그대로 두고 docs-kit 절을 더합니다(§5). 겹치거나 충돌하는 규칙은 사용자에게 보여 주고 고릅니다.
 4. 할 일 목록은 이슈로 만들고(사용자 승인 뒤) 문서에서는 번호만 남깁니다.
@@ -170,14 +170,14 @@ git submodule add <docs-kit 저장소 URL> .docs-kit
 | 요청 | 할 일 |
 | --- | --- |
 | "○○ 메뉴가 필요해" | `kit.py status`로 같은 일을 하는 탭을 찾음 → 있으면 제안 → 승인 뒤 `kit.py enable <id>`, 시작 파일을 프로젝트 내용으로 채움, AGENTS.md에 탭 흐름 추가, 빌드 경고 0 |
-| 같은 일을 하는 탭이 없음 | 프로젝트 하나에만 필요한 페이지면 일반 문서로 `docs/`에 두고 `nav`에 넣음. 여러 프로젝트가 쓸 형식이면 키트에 새 탭을 제안: 훅(`hooks/<id>.py` + 끝에 `_kitconf.gate(globals(), "<id>")`), 키트 페이지(`assets/<id>/`), 시작 파일(`template/features/<id>/`), `hooks/kitconf.py` `FEATURES`·`PROFILES`, 규격 §2·§10·§13, selftest, CHANGELOG, `docs-kit-context.md`, AGENTS 템플릿의 `[탭: <id>]` 항목. 승인 뒤 §7 절차 |
+| 같은 일을 하는 탭이 없음 | 프로젝트 하나에만 필요한 페이지면 일반 문서로 `docs/`에 두고 `docs-kit.yml` `nav`에 넣음. 여러 프로젝트가 쓸 형식이면 키트에 새 탭을 제안: 탭 모듈(`site/src/lib/` 메뉴·표시 줄, prd.md FR-ARC-2), 키트 페이지(`assets/<id>/`), 시작 파일(`template/features/<id>/`), `site/src/config/features.json`의 탭·묶음, 규격 §2·§10·§13, selftest, CHANGELOG, `docs-kit-context.md`, AGENTS 템플릿의 `[탭: <id>]` 항목. 승인 뒤 §7 절차 |
 | 문서 형식·템플릿을 바꾸고 싶음 | 프로젝트 하나에만 해당 → 프로젝트 `docs/`에 같은 경로 파일로 덮어씀(예: `docs/adr/README.md`). 모든 프로젝트 공통 → 키트에서 고침(§7) |
 | 탭을 끄고 싶음 | `kit.py disable <id>`. 문서는 지우지 않음(메뉴에서만 빠짐). AGENTS.md의 그 탭 항목 지움 |
 | "키트 최신으로" | `kit.py update` → CHANGELOG 확인 → 형식 이전이 필요하면 옮김 → 빌드 경고 0 → `.docs-kit` 커밋 |
 
 ## 7. 키트를 고치는 절차 (모든 프로젝트 공통)
 
-1. `.docs-kit`이 `main` 브랜치이고 `origin/main`과 같은지 확인합니다(`git -C .docs-kit status -sb`). 분리된 HEAD면 `git -C .docs-kit checkout -B main`(origin/main과 같을 때만).
+1. `.docs-kit`이 따라가는 브랜치(`.gitmodules`의 `branch`, Astro 판은 `astro`, 없으면 `main`)이고 `origin/<브랜치>`와 같은지 확인합니다(`git -C .docs-kit status -sb`). 분리된 HEAD면 `git -C .docs-kit checkout -B <브랜치> origin/<브랜치>`(같은 커밋일 때만).
 2. 고칩니다. 프로젝트 고유 내용(이름, 경로, 실제 값, 예시)을 넣지 않습니다. 화면 문구는 한국어, 코드·주석은 영어. 호스트 도구는 표준 라이브러리만(Python 3.8).
 3. `VERSION`(형식 추가 = 마이너, 고침 = 패치), `CHANGELOG.md` 맨 위 항목, 바뀐 동작은 `docs-kit-context.md`의 해당 절.
 4. `bin/selftest.sh` → `selftest OK`. 쓰고 있는 프로젝트에서 미리보기를 다시 켜서(`docs.sh stop && docs.sh start`) 화면 확인, 빌드 경고 0.
@@ -187,7 +187,7 @@ git submodule add <docs-kit 저장소 URL> .docs-kit
 ## 8. 체크리스트
 
 - [ ] 제안서를 보여 주고 명시적 승인을 받았다
-- [ ] `docs-kit.yml`(묶음, 탭, 분야)과 `mkdocs.yml`(이름, 트래커 주소)을 프로젝트 값으로 채웠다
+- [ ] `docs-kit.yml`(묶음, 탭, 분야, `site`의 이름·트래커 주소·배포 경로)을 프로젝트 값으로 채웠다
 - [ ] 시작 파일의 예시를 프로젝트 내용으로 바꿨다(모르는 것은 지어내지 않음)
 - [ ] AGENTS.md에 docs-kit 절을 넣고 끈 탭 항목을 지웠다
 - [ ] 빌드 경고 0, `kit.py check` 경고 0
