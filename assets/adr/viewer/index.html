@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>아키텍처</title>
+  <!-- Standalone C4 viewer. Data: data.json (written by docs-kit hooks/adr.py
+       from docs/adr/c4-model.yml and the ADR front matter). Guide: adr/guide.md §9 -->
+  <link rel="stylesheet" href="viewer.css">
+  <script>
+    // Theme before first paint: saved choice, else the system setting.
+    // Embedded in a docs page (?embed=1): follow that page's Material scheme
+    // instead, and keep following it when the reader toggles the page theme.
+    (function () {
+      var root = document.documentElement, t = null;
+      try { t = localStorage.getItem("docs-kit-c4-theme"); } catch (e) {}
+      if (!t) t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      root.setAttribute("data-theme", t);
+      if (!/[?&]embed=1/.test(location.search)) return;
+      root.classList.add("embed");
+      var body = null;
+      try { if (window.parent !== window) body = window.parent.document.body; } catch (e) {}  // other origin: keep t
+      if (!body) return;
+      function sync() {
+        var s = body.getAttribute("data-md-color-scheme");
+        if (s) root.setAttribute("data-theme", s === "slate" ? "dark" : "light");
+      }
+      sync();
+      new MutationObserver(sync).observe(body, { attributes: true, attributeFilter: ["data-md-color-scheme"] });
+    })();
+  </script>
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <a class="back" href="../c4.html" title="문서로 돌아가기">← 문서</a>
+      <span class="logo" id="site"></span><span class="product">Architecture</span>
+    </div>
+    <nav class="tabs" id="tabs" role="tablist"></nav>
+    <div class="tools">
+      <select id="filter" aria-label="결정 필터"></select>
+      <button class="icon" id="theme" title="밝게/어둡게"><svg viewBox="0 0 16 16" width="15" height="15"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M8 2.5a5.5 5.5 0 0 1 0 11z" fill="currentColor"/></svg></button>
+      <a class="icon newtab" id="newtab" href="#" target="_blank" title="새 창에서 크게 보기"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M9 2h5v5M14 2 7 9M12 10v4H2V4h4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="canvas" id="canvas" aria-label="C4 다이어그램">
+      <div class="heading" id="heading"></div>
+      <div class="stage" id="stage"></div>
+      <div class="zoom">
+        <button id="zin" title="확대"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></button>
+        <button id="zout" title="축소"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M3 8h10" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></button>
+        <button id="zfit" title="화면에 맞춤"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div class="status" id="status">불러오는 중…</div>
+    </section>
+    <section class="decisions" id="decisions" hidden></section>
+    <aside class="drawer" id="drawer" aria-label="상세"></aside>
+  </main>
+
+  <script src="vendor/elk.bundled.js"></script>  <!-- elkjs 0.9.3, vendored: vendor/README.txt -->
+  <script src="viewer.js"></script>
+</body>
+</html>
