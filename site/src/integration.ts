@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { ASSETS_DIR, CONFIG_FILE, DOCS_DIR, KIT_ASSET_SKIP, MKDOCS_FILE } from './config/paths.ts';
-import { loadConfig } from './config/load.ts';
+import { enabled, loadConfig } from './config/load.ts';
 import { scanFiles, scanPages } from './lib/site.ts';
 import { clearWarningFile, readWarnings, resetWarnings } from './lib/warnings.ts';
 
@@ -20,9 +20,21 @@ function vendorFiles(): Map<string, string> {
 	const katexDir = path.dirname(require.resolve('katex/package.json'));
 	m.set('_kit/vendor/katex/katex.min.css', path.join(katexDir, 'dist', 'katex.min.css'));
 	for (const f of fs.readdirSync(path.join(katexDir, 'dist', 'fonts'))) if (/\.woff2$/.test(f)) m.set(`_kit/vendor/katex/fonts/${f}`, path.join(katexDir, 'dist', 'fonts', f));
-	// Mermaid: the copy that the kit already vendors (assets/_kit/vendor/README.txt: 11.4.1, sha256 recorded)
-	m.set('_kit/vendor/mermaid/mermaid.min.js', path.join(ASSETS_DIR, '_kit', 'vendor', 'mermaid', 'mermaid.min.js'));
-	m.set('_kit/vendor/mermaid/LICENSE.txt', path.join(ASSETS_DIR, '_kit', 'vendor', 'mermaid', 'LICENSE.txt'));
+	// Pretendard (OFL-1.1): variable font, dynamic subset - a page loads only the unicode ranges it uses
+	const pre = path.join(path.dirname(require.resolve('pretendard/package.json')), 'dist', 'web', 'variable');
+	m.set('_kit/vendor/pretendard/pretendardvariable-dynamic-subset.css', path.join(pre, 'pretendardvariable-dynamic-subset.css'));
+	for (const f of fs.readdirSync(path.join(pre, 'woff2-dynamic-subset')))
+		m.set(`_kit/vendor/pretendard/woff2-dynamic-subset/${f}`, path.join(pre, 'woff2-dynamic-subset', f));
+	// Mermaid (npm, version in package-lock.json): the ESM build loads only the chunks of the diagram types a page uses
+	const mer = path.join(path.dirname(require.resolve('mermaid/package.json')), 'dist');
+	m.set('_kit/vendor/mermaid/mermaid.esm.min.mjs', path.join(mer, 'mermaid.esm.min.mjs'));
+	for (const f of fs.readdirSync(path.join(mer, 'chunks', 'mermaid.esm.min')))
+		if (!f.endsWith('.map')) m.set(`_kit/vendor/mermaid/chunks/mermaid.esm.min/${f}`, path.join(mer, 'chunks', 'mermaid.esm.min', f));
+	m.set('_kit/vendor/mermaid/LICENSE', path.join(path.dirname(mer), 'LICENSE'));
+	// JetBrains Mono (OFL-1.1, @fontsource-variable): code blocks
+	const jb = path.dirname(require.resolve('@fontsource-variable/jetbrains-mono/package.json'));
+	m.set('_kit/vendor/jetbrains-mono/index.css', path.join(jb, 'index.css'));
+	for (const f of fs.readdirSync(path.join(jb, 'files'))) if (f.endsWith('-normal.woff2')) m.set(`_kit/vendor/jetbrains-mono/files/${f}`, path.join(jb, 'files', f));
 	return m;
 }
 
@@ -100,7 +112,16 @@ export default function kit(): AstroIntegration {
 					fs.mkdirSync(path.dirname(to), { recursive: true });
 					fs.copyFileSync(abs, to);
 				}
-				// 3. search index (offline, static)
+				// 3. sitemap.xml for public sites (docs-kit.yml site.url): every page except templates
+				const kcfg = loadConfig();
+				if (kcfg.site.url) {
+					const root = kcfg.site.url.replace(/\/+$/, '') + base;
+					const urls = scanPages()
+						.filter((p) => !p.template && !(p.origin === 'kit' && p.feature && !enabled(kcfg, p.feature.id)))
+						.map((p) => `  <url><loc>${root}${p.url === 'index.html' ? '' : encodeURI(p.url)}</loc></url>`);
+					fs.writeFileSync(path.join(out, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`);
+				}
+				// 4. search index (static)
 				try {
 					const pagefind = await import('pagefind');
 					const { index } = await pagefind.createIndex({ forceLanguage: 'ko' });
@@ -112,7 +133,7 @@ export default function kit(): AstroIntegration {
 				} catch (e: any) {
 					logger.warn(`search index not built: ${e?.message ?? e}`);
 				}
-				// 4. warnings
+				// 5. warnings
 				const warnings = readWarnings();
 				const pages = scanPages().length;
 				console.log(`docs-kit: ${pages} pages, ${warnings.length} warning(s)`);

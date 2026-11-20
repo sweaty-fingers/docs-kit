@@ -21,7 +21,11 @@ site:
   # shared_port: 8000              # 공유 사이트 포트: 이 포트가 아니면 kit-dev-only 블록이 보임
   # base: /<저장소 이름>/            # 하위 경로에 배포할 때 (예: GitHub Pages 프로젝트 사이트). 루트면 비움
   # url: https://<호스트>            # 사이트 주소 (선택)
+  # repo_url: https://github.com/<계정>/<저장소>                  # 머리줄의 저장소 링크 (선택)
+  # edit_url: https://github.com/<계정>/<저장소>/edit/main/docs/  # 페이지마다 "이 페이지 고치기" (선택)
   # extra_css: [_static/site.css]    # docs/ 아래 프로젝트 스타일 (선택)
+
+# rerun: {viewer: hosted}         # Rerun 기록 상자: hosted = app.rerun.io가 사이트의 .rrd를 엶, local(기본) = 같은 PC의 뷰어
 
 links:                           # 짧은 주소 /r/<name>/
   - {name: home, to: README.md, title: 첫 페이지}

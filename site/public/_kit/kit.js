@@ -118,23 +118,44 @@
 		});
 	});
 
-	/* ---- Mermaid: render in the browser from the vendored copy, follow the theme ----- */
+	/* ---- Mermaid: ES module loaded on pages that have diagrams, colours from the site theme ----- */
 	var mermaidSources = [];
-	function renderMermaid(again) {
-		if (!window.mermaid) return;
-		var blocks = document.querySelectorAll("pre.mermaid");
-		if (!blocks.length) return;
-		blocks.forEach(function (b, i) {
-			if (mermaidSources[i] === undefined) mermaidSources[i] = b.textContent;
-			if (again) { b.removeAttribute("data-processed"); b.textContent = mermaidSources[i]; }
-		});
-		window.mermaid.initialize({ startOnLoad: false, theme: isDark() ? "dark" : "neutral", securityLevel: "strict", fontFamily: getComputedStyle(body).fontFamily });
-		window.mermaid.run({ nodes: blocks }).then(function () {
-			document.querySelectorAll(".dk-diagram").forEach(function (f) { if (f.dkZoom) f.dkZoom.reset(); });
-			scanDiagrams();
-		}).catch(function () {});
+	var mermaidLib = null;
+	function token(name, fallback) {
+		var v = getComputedStyle(root).getPropertyValue(name).trim();
+		return v || fallback;
 	}
-	if (window.mermaid) renderMermaid(false);
+	function mermaidTheme() {
+		var bg = token("--kit-bg", "#ffffff"), fg = token("--kit-fg", "#111111"), sub = token("--kit-subtle", "#f4f4f4");
+		var line = token("--kit-muted", "#666666"), border = token("--kit-accent", "#b9784c"), faint = token("--kit-border", "#dddddd");
+		return {
+			darkMode: isDark(), background: bg, fontFamily: getComputedStyle(body).fontFamily, fontSize: "15px",
+			primaryColor: sub, primaryBorderColor: border, primaryTextColor: fg, secondaryColor: bg, secondaryBorderColor: faint,
+			secondaryTextColor: fg, tertiaryColor: sub, tertiaryBorderColor: faint, tertiaryTextColor: fg, lineColor: line, textColor: fg,
+			mainBkg: sub, nodeBorder: border, clusterBkg: bg, clusterBorder: faint, titleColor: fg, edgeLabelBackground: bg,
+			noteBkgColor: sub, noteBorderColor: faint, noteTextColor: fg, actorBkg: sub, actorBorder: border, actorTextColor: fg,
+			signalColor: line, signalTextColor: fg, labelBoxBkgColor: sub, labelTextColor: fg
+		};
+	}
+	function renderMermaid(again) {
+		var blocks = document.querySelectorAll("pre.mermaid");
+		if (!blocks.length || !body.dataset.mermaid) return;
+		var go = function (mermaid) {
+			blocks.forEach(function (b, i) {
+				if (mermaidSources[i] === undefined) mermaidSources[i] = b.textContent;
+				if (again) { b.removeAttribute("data-processed"); b.textContent = mermaidSources[i]; }
+			});
+			mermaid.initialize({ startOnLoad: false, theme: "base", themeVariables: mermaidTheme(), securityLevel: "strict" });
+			mermaid.run({ nodes: blocks }).then(function () {
+				document.querySelectorAll(".dk-diagram").forEach(function (f) { if (f.dkZoom) f.dkZoom.reset(); });
+				scanDiagrams();
+			}).catch(function (e) { console.error("mermaid:", e); });
+		};
+		if (mermaidLib) return go(mermaidLib);
+		import(new URL(body.dataset.mermaid, location.href).href).then(function (m) { mermaidLib = m.default; go(mermaidLib); })
+			.catch(function (e) { console.error("mermaid: could not load", e); });
+	}
+	renderMermaid(false);
 	if (window.matchMedia) {
 		var mq = window.matchMedia("(prefers-color-scheme: dark)");
 		var onMq = function () { if (!root.dataset.theme) renderMermaid(true); };
@@ -254,9 +275,17 @@
 
 	/* ---- links to the project's other servers, short addresses, dev-only blocks ---- */
 	var h = location.hostname || "localhost";
+	/* Rerun: local = viewer and file server on the reader's host; hosted = app.rerun.io opens the file from this site */
+	function rerunUrls(file, d) {
+		if (d.viewer === "hosted") {
+			var f = /^https?:\/\//.test(file) ? file : new URL(up + file, location.href).href;
+			return { file: f, viewer: d.hosted + "?url=" + encodeURIComponent(f) };
+		}
+		var lf = "http://" + h + ":" + d.filePort + "/" + file;
+		return { file: lf, viewer: "http://" + h + ":" + d.webPort + "/?url=" + encodeURIComponent(lf) };
+	}
 	document.querySelectorAll("a[data-kit-rerun]").forEach(function (a) {
-		var f = "http://" + h + ":" + a.dataset.filePort + "/" + a.dataset.kitRerun;
-		a.href = "http://" + h + ":" + a.dataset.webPort + "/?url=" + encodeURIComponent(f); a.target = "_blank"; a.rel = "noopener";
+		a.href = rerunUrls(a.dataset.kitRerun, a.dataset).viewer; a.target = "_blank"; a.rel = "noopener";
 	});
 	document.querySelectorAll("a[data-kit-catalog]").forEach(function (a) {
 		a.href = "http://" + h + ":" + a.dataset.webPort + "/?url=" + encodeURIComponent("rerun+http://" + h + ":" + a.dataset.kitCatalog);
@@ -281,8 +310,8 @@
 
 	/* ---- Rerun recording boxes: nothing loads until "뷰어 불러오기" ------------------ */
 	document.querySelectorAll(".rerun-embed").forEach(function (box) {
-		var file = "http://" + h + ":" + box.dataset.filePort + "/" + box.dataset.file;
-		var viewer = "http://" + h + ":" + box.dataset.webPort + "/?url=" + encodeURIComponent(file);
+		var u = rerunUrls(box.dataset.file, box.dataset);
+		var file = u.file, viewer = u.viewer;
 		var state = box.querySelector(".rerun-embed__state"), load = box.querySelector(".rerun-embed__load");
 		var open = box.querySelector(".rerun-embed__open"), off = box.querySelector(".rerun-embed__off"), frame = box.querySelector(".rerun-embed__frame");
 		open.href = viewer;

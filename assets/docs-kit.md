@@ -4,7 +4,7 @@
 
 ## 1. 실행
 
-기본은 Docker입니다. 키트의 `docker/Dockerfile`로 Node와 사이트 패키지를 담은 이미지를 처음 한 번 만들고(이때만 네트워크 또는 사내 미러가 필요), 그 뒤에는 오프라인으로 돕니다. Docker가 없으면 호스트의 Node(22.18 이상)로 돌고(`DOCS_RUNNER=host`), 처음 한 번 사이트 패키지를 설치합니다.
+기본은 Docker입니다. 키트의 `docker/Dockerfile`로 Node와 사이트 패키지를 담은 이미지를 처음 한 번 만들어 씁니다. Docker가 없으면 호스트의 Node(22.18 이상)로 돌고(`DOCS_RUNNER=host`), 처음 한 번 사이트 패키지를 설치합니다.
 
 | 명령 | 동작 |
 | --- | --- |
@@ -18,8 +18,8 @@
 - 포트를 바꾸려면 `DOCS_PORT=8080 .docs-kit/bin/docs.sh start`처럼 지정합니다(`status`, `stop`에도 같은 값).
 - `docs/` 안의 파일이나 `docs-kit.yml`을 저장하면 1~2초 뒤 열린 페이지가 자동으로 새로고침됩니다.
 - 배포 방식은 프로젝트가 정합니다. `build/site/`는 정적 파일이라 사내 웹 서버에 그대로 올리거나 GitHub Pages 같은 곳에 올립니다. 하위 경로(예: `https://<계정>.github.io/<저장소>/`)에 올릴 때는 `docs-kit.yml`의 `site.base`를 그 경로로 둡니다.
-- 이 서버는 **로그인 없이** 네트워크로 닿는 누구나 볼 수 있습니다. 사내망 안에서만 씁니다.
-- 수식(KaTeX, 빌드할 때 그림), Mermaid 다이어그램(11.4.1), 아키텍처 뷰어(ELK 0.9.3), 사이트 검색(Pagefind)은 모두 docs-kit과 사이트 안에 들어 있어 **외부 인터넷 없이** 동작합니다. 사이트 검색은 빌드한 사이트(`build`)에서 동작하고 미리보기(`start`)에서는 안내만 나옵니다.
+- 미리보기 서버는 **로그인 없이** 네트워크로 닿는 누구나 볼 수 있습니다. 공개하면 안 되는 문서면 열어 둘 범위를 정해서 씁니다.
+- 수식(KaTeX, 빌드할 때 그림), Mermaid 다이어그램, 아키텍처 뷰어(ELK), 사이트 검색(Pagefind), 글꼴(Pretendard)은 버전을 고정해 사이트에 함께 실립니다. 사이트 검색은 빌드한 사이트(`build`)에서 동작하고 미리보기(`start`)에서는 안내만 나옵니다.
 
 ## 2. 문서 작성 규칙
 
@@ -61,10 +61,11 @@ Rerun 기록(`.rrd`)을 페이지에 넣으려면 한 줄을 씁니다. 경로�
 ```
 
 - 페이지에는 "뷰어 불러오기" 버튼이 있는 상자가 생깁니다. 누르기 전에는 아무것도 받지 않습니다(뷰어 약 40 MB).
-- 뷰어(`web_port`)와 파일 서버(`file_port`)는 문서 사이트와 **같은 PC**에서 돌아야 합니다. 서버가 응답하지 않으면 상자에 시작 명령이 나옵니다.
+- 뷰어는 두 가지입니다. `local`(기본): 뷰어(`web_port`)와 파일 서버(`file_port`)가 문서 사이트와 **같은 PC**에서 돌아야 하고, 서버가 응답하지 않으면 상자에 시작 명령이 나옵니다. `hosted`: Rerun 호스팅 웹 뷰어(app.rerun.io)가 사이트에 함께 올린 파일(`docs/<경로>.rrd`)이나 `https://` 주소의 파일을 엽니다. GitHub Pages처럼 서버를 띄울 수 없는 공개 배포에 씁니다(파일 서버가 CORS를 허용해야 함, GitHub Pages는 허용).
 - 포트와 시작 명령은 프로젝트 `docs-kit.yml`에서 정합니다. 기본값은 아래와 같습니다.
   ```yaml
-  rerun: {web_port: 9090, file_port: 9091, start: tools/rerun_server.sh start}
+  rerun: {web_port: 9090, file_port: 9091, start: tools/rerun_server.sh start}   # local (기본)
+  rerun: {viewer: hosted, version: "0.22.1"}       # hosted: 기록을 만든 SDK 버전에 맞춤 (없으면 최신)
   ```
 - GitLab 화면에서는 주석이라 보이지 않습니다. 본문에 파일 위치와 여는 명령을 함께 적어 둡니다.
 
@@ -92,6 +93,7 @@ links:
 | 하고 싶은 것 | 방법 |
 | --- | --- |
 | 사이트 이름, 메뉴, 배포 경로 | 프로젝트 `docs-kit.yml`의 `site.name`, `nav`, `site.base` |
+| 머리줄의 저장소 링크, 페이지마다 "이 페이지 고치기" | `site.repo_url`, `site.edit_url`(예: `https://github.com/<계정>/<저장소>/edit/main/docs/`) |
 | 프로젝트만의 스타일·스크립트 | `docs/` 아래 파일(예: `docs/_static/site.css`)을 두고 `docs-kit.yml`의 `site.extra_css`, `site.extra_js`에 경로를 적음 |
 | docs-kit 페이지·파일 하나를 바꿈 (예: ADR 목록 소개문) | 같은 경로로 프로젝트 `docs/`에 파일을 둠(예: `docs/adr/README.md`). 프로젝트 파일이 우선 |
 | 모든 프로젝트에 공통인 것 (테마, ADR 형식, 뷰어) | docs-kit 저장소에 반영하고 각 프로젝트에서 서브모듈을 갱신 |

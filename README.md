@@ -21,7 +21,7 @@
 
 ## 1. 에이전트에게 줄 지시문 (복사해 붙여 넣기)
 
-`<docs-kit 저장소 URL>`은 `https://github.com/sweaty-fingers/docs-kit`입니다. 사이트 엔진이 Astro인 판은 **`astro` 브랜치**에 있으므로(main은 MkDocs 판, prd.md §11 전환 방법) 서브모듈은 `git submodule add -b astro <URL> .docs-kit`로 넣습니다. 모두 **제안 → 사용자 승인 → 작업** 순서입니다.
+`<docs-kit 저장소 URL>`은 `https://github.com/sweaty-fingers/docs-kit`입니다. `main`이 사이트 엔진이 Astro인 판(0.16 이후)이고, MkDocs 판은 태그 `v0.15.4`에 남아 있습니다. 서브모듈은 `git submodule add -b main <URL> .docs-kit`로 넣습니다. 모두 **제안 → 사용자 승인 → 작업** 순서입니다.
 
 ### 1.1 새 프로젝트를 docs-kit으로 시작할 때
 
@@ -104,11 +104,11 @@ docs-kit 저장소의 prd.md를 읽고 docs-kit을 Astro 기반으로 처음부�
 
 ## 2. 사람이 직접 세우기
 
-호스트에 필요한 것은 git, Python 3.8 이상, 그리고 Docker **또는** Node 22.18 이상(`DOCS_RUNNER=host`)입니다. Docker를 쓰면 처음 한 번 사이트 이미지를 만들 때만 네트워크(또는 사내 미러)가 필요합니다.
+호스트에 필요한 것은 git, Python 3.8 이상, 그리고 Docker **또는** Node 22.18 이상(`DOCS_RUNNER=host`)입니다. Docker를 쓰면 처음 한 번 사이트 이미지를 만듭니다.
 
 ```bash
 cd <프로젝트 루트>
-git submodule add -b astro https://github.com/sweaty-fingers/docs-kit.git .docs-kit
+git submodule add -b main https://github.com/sweaty-fingers/docs-kit.git .docs-kit
 .docs-kit/bin/kit.py init --name "프로젝트 이름" --profile dev   # minimal | app | dev | research | all
 .docs-kit/bin/docs.sh build 2>&1 | grep -iE "warn|error"         # 아무것도 안 나와야 함
 .docs-kit/bin/docs.sh start                                       # http://localhost:8000/
@@ -135,7 +135,7 @@ docs-kit MkDocs 판(0.15)을 쓰던 프로젝트는 `.docs-kit/bin/kit.py migrat
 git clone --recurse-submodules <프로젝트 저장소>
 git submodule update --init                 # .docs-kit/이 비어 있을 때
 .docs-kit/bin/kit.py check --fetch          # 키트 상태: 고치다 만 것, push 안 된 것, 새 버전
-.docs-kit/bin/kit.py update                 # 따라가는 브랜치(astro 판: astro)의 최신으로 갱신하고 바뀐 점(CHANGELOG)을 보여 줌
+.docs-kit/bin/kit.py update                 # 따라가는 브랜치(보통 main)의 최신으로 갱신하고 바뀐 점(CHANGELOG)을 보여 줌
 git add .docs-kit && git commit -m "docs-kit <버전>"
 ```
 
@@ -160,7 +160,7 @@ git add .docs-kit && git commit -m "docs-kit <버전>"
 
 절차는 [AGENTS-GUIDE.md](AGENTS-GUIDE.md) §7입니다. 요약:
 
-1. 이 저장소의 `astro` 브랜치(Astro 판)에서 고칩니다. 프로젝트 고유 내용(이름, 경로, 실제 값, 예시)을 넣지 않습니다. 화면 문구는 한국어, 코드 주석은 영어.
+1. 이 저장소의 `main`에서 고칩니다. 프로젝트 고유 내용(이름, 경로, 실제 값, 예시)을 넣지 않습니다. 화면 문구는 한국어, 코드 주석은 영어.
 2. `bin/selftest.sh` → `selftest OK` (단위 시험, 묶음 5개 빌드와 탭 순서, minimal 프로젝트의 탭 켜기·끄기, Markdown 고정 입력, 외부 스크립트 없음, `migrate`, 인용 점검).
 3. 쓰고 있는 프로젝트 하나에서 화면을 확인합니다(`site/` 코드를 고쳤으면 미리보기 서버를 다시 켬).
 4. `VERSION`, `CHANGELOG.md`, 바뀐 동작은 `docs-kit-context.md`에 반영하고 커밋 → push(키트 먼저) → 프로젝트의 `.docs-kit` 갱신.

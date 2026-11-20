@@ -8,6 +8,7 @@ import type { Page, Site } from './site.ts';
 import { urlOf } from './site.ts';
 import { warn } from './warnings.ts';
 import { escapeHtml } from '../markdown/pre.ts';
+import { hostedBase } from './markers.ts';
 
 const HEADING_NUM = /^\s*(\d+(?:\.\d+)*)\.?(?:\s|$)/;
 const REF = /(?:\b(\d{2}|A\d{1,2}|G\d{1,2}|R\d{1,2})\s)?§\s?(\d+(?:\.\d+)*)/g;
@@ -64,7 +65,8 @@ export function finishLinks(site: Site): Page[] {
 	}
 
 	const sharedPort = site.cfg.site.shared_port !== undefined ? String(site.cfg.site.shared_port) : '';
-	const { web_port, file_port } = site.cfg.rerun;
+	const { web_port, file_port, viewer } = site.cfg.rerun;
+	const hosted = hostedBase(site.cfg.rerun);
 
 	for (const p of pages) {
 		// 1. a link to a page with "08 §3.1" as its text gets the anchor
@@ -106,7 +108,8 @@ export function finishLinks(site: Site): Page[] {
 		if (/href="(rerun|catalog|port):/.test(html))
 			html = html.replace(/<a href="(rerun|catalog|port):([^"]*)"/g, (_, kind: string, rest: string) => {
 				const v = rest.replace(/&amp;/g, '&');
-				if (kind === 'rerun') return `<a href="#" data-kit-rerun="${escapeHtml(v)}" data-web-port="${web_port}" data-file-port="${file_port}"`;
+				if (kind === 'rerun')
+					return `<a href="#" data-kit-rerun="${escapeHtml(v)}" data-web-port="${web_port}" data-file-port="${file_port}" data-viewer="${viewer}" data-hosted="${escapeHtml(hosted)}"`;
 				if (kind === 'catalog') {
 					const [port, web] = v.split('@');
 					return `<a href="#" data-kit-catalog="${escapeHtml(port)}" data-web-port="${escapeHtml(web || String(web_port))}"`;

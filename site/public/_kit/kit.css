@@ -2,9 +2,11 @@
    (prd.md FR-UI-1..7). Light follows the system unless the reader chose (data-theme on <html>). */
 
 :root {
-	--kit-font: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR",
-		"Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-	--kit-mono: "JetBrains Mono", "D2Coding", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+	/* Pretendard is vendored (_kit/vendor/pretendard, OFL-1.1), so every reader gets the same Korean / Latin face;
+	   the system fonts are the fallback while it loads */
+	--kit-font: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic",
+		"Noto Sans KR", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	--kit-mono: "JetBrains Mono Variable", "JetBrains Mono", "D2Coding", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
 	--kit-radius: 12px;
 	--kit-header-h: 56px;
 	--kit-tabs-h: 44px;
@@ -85,6 +87,9 @@ body.kit {
 	font-family: var(--kit-font);
 	font-size: 16px;
 	line-height: 1.75;
+	letter-spacing: -0.005em;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 }
 a { color: var(--kit-link); }
 :focus-visible { outline: 2px solid var(--kit-focus); outline-offset: 2px; border-radius: 4px; }
@@ -318,7 +323,11 @@ img { max-width: 100%; height: auto; }
 	color: var(--kit-muted); font-size: 14px; background: var(--kit-subtle);
 }
 
-/* ---- previous / next, back to top --------------------------------------- */
+/* ---- edit link, previous / next, back to top --------------------------------------- */
+.kit-edit { margin: 48px 0 0; font-size: 14px; }
+.kit-edit a { display: inline-flex; align-items: center; gap: 6px; color: var(--kit-muted); text-decoration: none; min-height: 44px; }
+.kit-edit a:hover { color: var(--kit-fg); }
+.kit-edit + .kit-pager { margin-top: 12px; }
 .kit-pager { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--kit-border); }
 .kit-pager__link {
 	display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1px solid var(--kit-border); border-radius: var(--kit-radius);
@@ -388,6 +397,10 @@ img { max-width: 100%; height: auto; }
 .kit-dev-only { display: none; }
 .kit-dev-only.is-shown { display: block; border-left: 4px solid var(--kit-accent); padding: 0 0 0 1em; margin: 1em 0; }
 a.kit-short { font-family: var(--kit-mono); word-break: break-all; }
+
+.kit-404 { max-width: 36rem; margin: 18vh auto 0; padding: 0 20px; }
+.kit-404__code { font-size: 64px; font-weight: 800; color: var(--kit-accent); margin: 0; letter-spacing: -0.03em; }
+.kit-404 h1 { margin: 4px 0 12px; }
 
 @media (prefers-reduced-motion: reduce) {
 	* { scroll-behavior: auto !important; transition: none !important; animation: none !important; }

@@ -33,6 +33,10 @@ const SiteSchema = z
 		// (GitHub Pages project site: "/<repo>/"), url = origin (https://<host>). Empty = served at the root.
 		base: z.string().optional(),
 		url: z.string().optional(),
+		// Not in prd.md §5 (added): the project's repository (link in the header) and the edit link of a page:
+		// edit_url + path under docs/ (e.g. https://github.com/<user>/<repo>/edit/main/docs/)
+		repo_url: z.string().optional(),
+		edit_url: z.string().optional(),
 		// Not in prd.md §5 (added): project stylesheets / scripts under docs/ (paths relative to docs/).
 		extra_css: z.array(z.string()).default([]),
 		extra_js: z.array(z.string()).default([]),
@@ -40,7 +44,17 @@ const SiteSchema = z
 	.strict();
 
 const RerunSchema = z
-	.object({ web_port: z.number().default(9090), file_port: z.number().default(9091), start: z.string().default('tools/rerun_server.sh start') })
+	.object({
+		// local: Rerun web viewer and file server on the reader's host (ports below, the MkDocs edition's behaviour)
+		// hosted: the hosted web viewer (app.rerun.io) opens the recording from the site itself (docs/<path>.rrd) or
+		//         any http(s) URL - for public deploys such as GitHub Pages, no server to run
+		viewer: z.enum(['local', 'hosted']).default('local'),
+		hosted_url: z.string().default('https://app.rerun.io/'),
+		version: z.string().optional(), // hosted viewer version (match the SDK that wrote the .rrd), e.g. "0.22.1"
+		web_port: z.number().default(9090),
+		file_port: z.number().default(9091),
+		start: z.string().default('tools/rerun_server.sh start'),
+	})
 	.strict();
 
 const ConfigSchema = z
@@ -63,7 +77,7 @@ export interface KitConfig {
 	site: z.infer<typeof SiteSchema>;
 	nav: NavSpec[] | null;
 	links: { name: string; to: string; title: string }[];
-	rerun: { web_port: number; file_port: number; start: string };
+	rerun: z.infer<typeof RerunSchema>;
 	/** Where site / nav / links came from: docs-kit.yml, mkdocs.yml (old projects, FR-CFG-3) or defaults. */
 	siteFrom: 'docs-kit.yml' | 'mkdocs.yml' | 'default';
 }

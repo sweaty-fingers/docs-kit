@@ -53,18 +53,28 @@ function shortLinks(ctx: Ctx): string {
 	return rows.join('\n');
 }
 
+/** Hosted viewer address with the version folder when a version is set (app.rerun.io/version/<v>/). */
+export function hostedBase(s: KitConfig['rerun']): string {
+	const base = s.hosted_url.endsWith('/') ? s.hosted_url : s.hosted_url + '/';
+	return s.version ? `${base}version/${s.version}/` : base;
+}
+
 function rerunBox(ctx: Ctx, file: string, opts: Record<string, string>): string {
 	const s = ctx.cfg.rerun;
 	const height = Number(opts.height || 560);
 	const name = escapeHtml(file.split('/').pop() || file);
-	const data = `data-file="${escapeHtml(file)}" data-web-port="${s.web_port}" data-file-port="${s.file_port}" data-height="${height}"`;
+	const data =
+		`data-file="${escapeHtml(file)}" data-web-port="${s.web_port}" data-file-port="${s.file_port}" data-height="${height}" ` +
+		`data-viewer="${s.viewer}" data-hosted="${escapeHtml(hostedBase(s))}"`;
 	return (
 		`<div class="rerun-embed" ${data}>` +
 		`<div class="rerun-embed__bar"><span class="rerun-embed__name">Rerun · <code>${name}</code></span>` +
 		`<span class="rerun-embed__state">서버 확인 중…</span>` +
 		`<button type="button" class="rerun-embed__load" disabled>뷰어 불러오기</button>` +
 		`<a class="rerun-embed__open" target="_blank" rel="noopener">새 창에서 열기</a></div>` +
-		`<div class="rerun-embed__off" hidden>Rerun 서버가 응답하지 않습니다. 문서 서버가 도는 PC에서 <code>${escapeHtml(s.start)}</code>를 실행한 뒤 이 페이지를 새로고침합니다.</div>` +
+		(s.viewer === 'hosted'
+			? `<div class="rerun-embed__off" hidden>기록 파일을 찾지 못했습니다. <code>docs/${escapeHtml(file)}</code>가 사이트에 올라가 있는지(또는 주소가 맞는지) 확인합니다.</div>`
+			: `<div class="rerun-embed__off" hidden>Rerun 서버가 응답하지 않습니다. 문서 서버가 도는 PC에서 <code>${escapeHtml(s.start)}</code>를 실행한 뒤 이 페이지를 새로고침합니다.</div>`) +
 		`<div class="rerun-embed__frame"></div></div>`
 	);
 }

@@ -23,7 +23,8 @@ export async function getStaticPaths() {
 
 const { to, title } = Astro.props as { to: string; title: string };
 const site = await getSite();
-const { web_port, file_port } = site.cfg.rerun;
+const { web_port, file_port, viewer, hosted_url, version } = site.cfg.rerun;
+const hosted = (hosted_url.endsWith('/') ? hosted_url : hosted_url + '/') + (version ? `version/${version}/` : '');
 let dest = '';
 let target = '';
 if (!['rerun:', 'catalog:', 'port:'].some((p) => to.startsWith(p))) {
@@ -31,6 +32,9 @@ if (!['rerun:', 'catalog:', 'port:'].some((p) => to.startsWith(p))) {
 	if (!page) warn('links', 'docs-kit.yml', `short address r/${Astro.params.name}/ points to ${to}, which is not a page in docs/`);
 	else dest = '../../' + urlOf(page.rel);
 	target = `function () { return ${JSON.stringify(dest || '../../index.html')}; }`;
+} else if (to.startsWith('rerun:') && viewer === 'hosted') {
+	const file = to.slice(6);
+	target = `function () { var f = ${JSON.stringify(file)}; if (!/^https?:\\/\\//.test(f)) f = new URL('../../' + f, location.href).href; return ${JSON.stringify(hosted)} + '?url=' + encodeURIComponent(f); }`;
 } else if (to.startsWith('rerun:')) {
 	target = `function (h) { var f = 'http://' + h + ':${file_port}/' + ${JSON.stringify(to.slice(6))}; return 'http://' + h + ':${web_port}/?url=' + encodeURIComponent(f); }`;
 } else if (to.startsWith('catalog:')) {

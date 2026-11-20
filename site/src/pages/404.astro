@@ -1,0 +1,29 @@
+---
+// Not found (static hosts such as GitHub Pages serve 404.html for any missing path, so links here are absolute).
+import { loadConfig } from '../config/load.ts';
+const cfg = loadConfig();
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+---
+<!doctype html>
+<html lang="ko">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="robots" content="noindex" />
+		<link rel="icon" href="data:," />
+		<title>페이지를 찾지 못했습니다 - {cfg.site.name}</title>
+		<link rel="stylesheet" href={`${base}_kit/vendor/pretendard/pretendardvariable-dynamic-subset.css`} />
+		<link rel="stylesheet" href={`${base}_kit/kit.css`} />
+		<script is:inline>
+			try { var t = localStorage.getItem('kit-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+		</script>
+	</head>
+	<body class="kit">
+		<main class="kit-404">
+			<p class="kit-404__code">404</p>
+			<h1>페이지를 찾지 못했습니다</h1>
+			<p>주소가 바뀌었거나 없는 문서입니다. 문서는 <code>a/b.html</code> 형식의 주소를 씁니다.</p>
+			<p><a href={`${base}index.html`}>{cfg.site.name} 첫 페이지로</a></p>
+		</main>
+	</body>
+</html>

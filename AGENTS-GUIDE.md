@@ -70,7 +70,7 @@ docs-kit으로 프로젝트 문서를 세우고 운영하는 **에이전트**(Cl
 ### 2.3 승인 뒤 실행
 
 ```bash
-git submodule add -b astro <docs-kit 저장소 URL> .docs-kit   # Astro 판 (README §1)
+git submodule add -b main <docs-kit 저장소 URL> .docs-kit
 .docs-kit/bin/kit.py init --name "<프로젝트 이름>" --profile <묶음>   # 있는 파일은 건드리지 않음
 .docs-kit/bin/kit.py enable <더 켤 탭> ; .docs-kit/bin/kit.py disable <끌 탭>
 ```
@@ -177,7 +177,7 @@ git submodule add -b astro <docs-kit 저장소 URL> .docs-kit   # Astro 판 (REA
 
 ## 7. 키트를 고치는 절차 (모든 프로젝트 공통)
 
-1. `.docs-kit`이 따라가는 브랜치(`.gitmodules`의 `branch`, Astro 판은 `astro`, 없으면 `main`)이고 `origin/<브랜치>`와 같은지 확인합니다(`git -C .docs-kit status -sb`). 분리된 HEAD면 `git -C .docs-kit checkout -B <브랜치> origin/<브랜치>`(같은 커밋일 때만).
+1. `.docs-kit`이 따라가는 브랜치(`.gitmodules`의 `branch`, 없으면 `main`)이고 `origin/<브랜치>`와 같은지 확인합니다(`git -C .docs-kit status -sb`). 분리된 HEAD면 `git -C .docs-kit checkout -B <브랜치> origin/<브랜치>`(같은 커밋일 때만).
 2. 고칩니다. 프로젝트 고유 내용(이름, 경로, 실제 값, 예시)을 넣지 않습니다. 화면 문구는 한국어, 코드·주석은 영어. 호스트 도구는 표준 라이브러리만(Python 3.8).
 3. `VERSION`(형식 추가 = 마이너, 고침 = 패치), `CHANGELOG.md` 맨 위 항목, 바뀐 동작은 `docs-kit-context.md`의 해당 절.
 4. `bin/selftest.sh` → `selftest OK`. 쓰고 있는 프로젝트에서 미리보기를 다시 켜서(`docs.sh stop && docs.sh start`) 화면 확인, 빌드 경고 0.

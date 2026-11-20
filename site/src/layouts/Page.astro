@@ -34,6 +34,10 @@ const siteName = cfg.site.name;
 const titleText = page.url === 'index.html' ? siteName : `${page.title} - ${siteName}`;
 const description = typeof page.front.description === 'string' ? page.front.description : undefined;
 const hasMath = page.html.includes('class="katex');
+// public address of this page (link previews, canonical) when docs-kit.yml has site.url
+const baseUrl = cfg.site.url ? cfg.site.url.replace(/\/+$/, '') + import.meta.env.BASE_URL.replace(/\/?$/, '/') : '';
+const pageUrl = baseUrl ? baseUrl + (page.url === 'index.html' ? '' : page.url) : '';
+const summary = description ?? (page.html.match(/<p>([\s\S]*?)<\/p>/)?.[1] ?? '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 160);
 const hasMermaid = page.html.includes('class="mermaid"');
 ---
 <!doctype html>
@@ -44,18 +48,32 @@ const hasMermaid = page.html.includes('class="mermaid"');
 		<meta name="generator" content="docs-kit" />
 		<link rel="icon" href="data:," />
 		<title>{titleText}</title>
-		{description && <meta name="description" content={description} />}
+		{summary && <meta name="description" content={summary} />}
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content={siteName} />
+		<meta property="og:title" content={page.url === 'index.html' ? siteName : page.title} />
+		{summary && <meta property="og:description" content={summary} />}
+		{pageUrl && <meta property="og:url" content={pageUrl} />}
+		{pageUrl && <link rel="canonical" href={pageUrl} />}
+		{page.template && <meta name="robots" content="noindex" />}
 		<script is:inline>
 			try {
 				var t = localStorage.getItem('kit-theme');
 				if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
 			} catch (e) {}
 		</script>
+		<link rel="stylesheet" href={`${up}_kit/vendor/pretendard/pretendardvariable-dynamic-subset.css`} />
+		{page.html.includes('<pre') && <link rel="stylesheet" href={`${up}_kit/vendor/jetbrains-mono/index.css`} />}
 		<link rel="stylesheet" href={`${up}_kit/kit.css`} />
 		{hasMath && <link rel="stylesheet" href={`${up}_kit/vendor/katex/katex.min.css`} />}
 		{cfg.site.extra_css.map((c) => <link rel="stylesheet" href={`${up}${c}`} />)}
 	</head>
-	<body class:list={['kit', { 'kit--wide': hideNav, 'kit--no-toc': !toc.length }]} data-shared-port={cfg.site.shared_port ?? ''} data-up={up}>
+	<body
+		class:list={['kit', { 'kit--wide': hideNav, 'kit--no-toc': !toc.length }]}
+		data-shared-port={cfg.site.shared_port ?? ''}
+		data-up={up}
+		data-mermaid={hasMermaid ? `${up}_kit/vendor/mermaid/mermaid.esm.min.mjs` : undefined}
+	>
 		<a class="kit-skip" href="#kit-content">본문으로 건너뛰기</a>
 		<header class="kit-header">
 			<div class="kit-header__row">
@@ -70,6 +88,9 @@ const hasMermaid = page.html.includes('class="mermaid"');
 					<button type="button" class="kit-search-btn" data-kit-search aria-label="검색 (/)">
 						<Icon name="search" size={18} /><span class="kit-search-btn__label">검색</span><kbd>/</kbd>
 					</button>
+					{cfg.site.repo_url && (
+						<a class="kit-iconbtn" href={cfg.site.repo_url} aria-label="저장소" title="저장소" target="_blank" rel="noopener"><Icon name="repo" /></a>
+					)}
 					<button type="button" class="kit-iconbtn" data-kit-theme aria-label="밝음/어두움 전환">
 						<span class="kit-theme-dark"><Icon name="moon" /></span><span class="kit-theme-light"><Icon name="sun" /></span>
 					</button>
@@ -131,6 +152,15 @@ const hasMermaid = page.html.includes('class="mermaid"');
 					<Fragment set:html={page.html} />
 				</article>
 				{
+					cfg.site.edit_url && page.origin === 'project' && (
+						<p class="kit-edit">
+							<a href={(cfg.site.edit_url.endsWith('/') ? cfg.site.edit_url : cfg.site.edit_url + '/') + page.rel} target="_blank" rel="noopener">
+								<Icon name="edit" size={16} />이 페이지 고치기
+							</a>
+						</p>
+					)
+				}
+				{
 					(prev || next) && (
 						<nav class="kit-pager" aria-label="이전·다음 문서">
 							{prev ? (
@@ -180,7 +210,6 @@ const hasMermaid = page.html.includes('class="mermaid"');
 				<div id="kit-search-ui" data-bundle={`${up}_kit/pagefind/`}></div>
 			</div>
 		</div>
-		{hasMermaid && <script is:inline src={`${up}_kit/vendor/mermaid/mermaid.min.js`}></script>}
 		<script is:inline src={`${up}_kit/kit.js`}></script>
 		{cfg.site.extra_js.map((s) => <script is:inline src={`${up}${s}`}></script>)}
 	</body>

@@ -3,7 +3,8 @@
 #   bin/selftest.sh            DOCS_RUNNER=docker|host as for bin/docs.sh (host: Node >= 22.18 on this machine)
 # Checks (prd.md §10): every profile builds with no warning and its tabs in the standard order; a minimal project
 # builds clean again after enable / disable; the fixture project (tests/fixtures/all/) renders the Markdown of
-# FR-MD and the common features; no page loads a script from another host; kit.py migrate moves mkdocs.yml settings.
+# FR-MD and the common features; kit.py migrate moves mkdocs.yml settings. (External requests are allowed since
+# 2026-11-20, prd.md §0: no offline check.)
 # Tab modules that come in later milestones (M4-M6) add their checks here when they are built.
 set -euo pipefail
 
@@ -72,7 +73,8 @@ for f in index.html docs-kit.html docs-standard.html adr/index.html adr/log.html
          adr/0001-record-architecture-decisions.html adr/viewer/index.html adr/viewer/vendor/elk.bundled.js r/home/index.html \
          experiments/list.html weekly/index.html weekly/threads.html weekly/2026-01-12.html roadmap/index.html roadmap/guide.html \
          graph/index.html plan/index.html plan/guide.html plan/sprints.html quality/index.html glossary/index.html guides/g2_markdown.html \
-         _kit/kit.css _kit/kit.js _kit/vendor/mermaid/mermaid.min.js _kit/vendor/katex/katex.min.css _kit/pagefind/pagefind.js; do
+         _kit/kit.css _kit/kit.js _kit/vendor/mermaid/mermaid.esm.min.mjs _kit/vendor/katex/katex.min.css _kit/vendor/pretendard/pretendardvariable-dynamic-subset.css \
+         _kit/vendor/jetbrains-mono/index.css _kit/pagefind/pagefind.js; do
   [[ -f "$S/$f" ]] || fail "MISSING build/site/$f"
 done
 tr -d '\n' < "$S/index.html" | grep -qE '<p>설명:</p>[[:space:]]*<ul>[[:space:]]*<li><strong>상위</strong>:[[:space:]]*<ul>' \
@@ -103,10 +105,6 @@ PY
 )"
 [[ -z "$md" ]] || fail "markdown (guides/g2_markdown.html) not as expected: $md"
 grep -q 'location.replace' "$S/r/home/index.html" || fail "short address r/home/ is not a redirect page"
-# Pages must not load scripts, styles or fonts from another host (NFR-1).
-ext="$(grep -rlE '(src|href)="https?://[^"]+\.(js|css|woff2?)' "$S" --include='*.html' || true)"
-[[ -z "$ext" ]] || fail "EXTERNAL SCRIPT/STYLE in: $ext"
-
 # ---- 4. ask (bin/docs_ask.py): the per-sentence citation check (host Python, no model needed)
 ask="$(python3 - "$KIT/bin" <<'PY'
 import sys; sys.path.insert(0, sys.argv[1]); import docs_ask as a
