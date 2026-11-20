@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.1 — 2026-11-20
+
+- Record tables: ids (ADR-NNNN, VR-, EXP-, P-) and dates stay on one line instead of breaking at the hyphen
+
 ## 0.17.0 — 2026-11-20
 
 - Record tabs in the Astro edition (prd.md M4, `site/src/lib/records.ts`, port of hooks/adr.py, records.py, experiments.py, arc42.py, publications.py): front matter and numbering checks as `WARNING` lines, `adr-index`, `adr-log`, `c4-app`, `c4-elements`, `c4-view: <id>` on any page, `vr-index`, `exp-index`, `arc42-index`, `pub-index`, the card under each record's title (VR / EXP rows on ADR cards, superseded VRs, publication sources and snapshot note), C4 model checks and the viewer data `adr/viewer/data.json` (views, elements, ADR summaries, VRs per element and ADR). The C4 viewer page itself is unchanged; it now follows the docs page theme when embedded, uses elkjs 0.12.1 from npm and the Pretendard font. Markers of a record tab that is off say so instead of a placeholder. Table cells no longer shrink a column to one character. selftest: fixtures for ADR-0002, VR-0001 (with repro files), EXP-0001, P-0001 and a `c4-view` embed; checks for indexes, back links, viewer data, and warnings of a broken ADR

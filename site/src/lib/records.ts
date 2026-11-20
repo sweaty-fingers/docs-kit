@@ -325,17 +325,21 @@ const card = (cls: string, rows: [string, string][]) =>
 const area = (R: Records, a: any) => esc(R.areas[a] ?? str(a));
 const people = (v: any) => esc(Array.isArray(v) ? v.join(', ') : str(v));
 
+/** ids and dates in tables stay on one line */
+const nw = (html: string) => `<span class="kit-nowrap">${html}</span>`;
+const day = (v: any) => nw(str(v));
+
 function link(from: string, toRel: string, text: string): string {
 	return `<a href="${relUrl(from, urlOfRel(toRel)) || '#'}">${esc(text)}</a>`;
 }
 function adrRef(R: Records, from: string, v: any): string {
 	const n = num4(v);
 	const r = R.adrs.get(n);
-	return r ? link(from, r.file, `ADR-${n}`) : `ADR-${n}`;
+	return nw(r ? link(from, r.file, `ADR-${n}`) : `ADR-${n}`);
 }
 function vrRef(R: Records, from: string, n: string): string {
 	const r = R.vrs.get(n);
-	return r ? link(from, r.file, `VR-${n}`) : `VR-${n}`;
+	return nw(r ? link(from, r.file, `VR-${n}`) : `VR-${n}`);
 }
 function viewer(from: string): string {
 	return relUrl(from, 'adr/viewer/index.html');
@@ -368,7 +372,7 @@ export function recordMarkers(cfg: KitConfig, page: { url: string }): Record<str
 			for (const r of [...R.adrs.values()].sort((a, b) => a.num.localeCompare(b.num))) {
 				let st = adrBadge(r.meta.status);
 				if (r.meta.superseded_by) st += ` → ${adrRef(R, from, r.meta.superseded_by)}`;
-				rows.push(`| ${link(from, r.file, `ADR-${r.num}`)} | ${md(r.title)} | ${st} | ${area(R, r.meta.area)} | ${str(r.meta.date)} |`);
+				rows.push(`| ${nw(link(from, r.file, `ADR-${r.num}`))} | ${md(r.title)} | ${st} | ${area(R, r.meta.area)} | ${day(r.meta.date)} |`);
 			}
 			return rows.join('\n') + `\n\n총 ${R.adrs.size}건: ${counts(R.adrs.values(), 'status', ADR_STATUS)}`;
 		};
@@ -380,7 +384,7 @@ export function recordMarkers(cfg: KitConfig, page: { url: string }): Record<str
 				let st = adrBadge(r.meta.status);
 				if (r.meta.superseded_by) st += ` → ${adrRef(R, from, r.meta.superseded_by)}`;
 				const els = list(r.meta.c4).map((e) => elLink(R, from, e)).join(', ');
-				rows.push(`| ${link(from, r.file, r.num)} | ${str(r.meta.date)} | ${md(r.meta.summary || r.title)} | ${st} | ${els} |`);
+				rows.push(`| ${link(from, r.file, r.num)} | ${day(r.meta.date)} | ${md(r.meta.summary || r.title)} | ${st} | ${els} |`);
 			}
 			return rows.join('\n');
 		};
@@ -431,7 +435,7 @@ export function recordMarkers(cfg: KitConfig, page: { url: string }): Record<str
 				let res = vrBadge(r.meta.result);
 				if (r.supersededBy.length) res += ' → ' + r.supersededBy.map((n) => vrRef(R, from, n)).join(', ');
 				rows.push(
-					`| ${link(from, r.file, `VR-${r.num}`)} | ${res} | ${str(r.meta.date)} | ${area(R, r.meta.area)} | ${md(r.meta.subject || r.title)} ` +
+					`| ${nw(link(from, r.file, `VR-${r.num}`))} | ${res} | ${day(r.meta.date)} | ${area(R, r.meta.area)} | ${md(r.meta.subject || r.title)} ` +
 						`| ${list(r.meta.adr).map((a) => adrRef(R, from, a)).join(', ')} | ${md(r.meta.guide)} |`,
 				);
 			}
@@ -443,7 +447,7 @@ export function recordMarkers(cfg: KitConfig, page: { url: string }): Record<str
 			const rows = ['| EXP | 상태 | 시작 | 분야 | 질문 | 실험 기록 제목 | 관련 ADR | 이슈 |', '| --- | --- | --- | --- | --- | --- | --- | --- |'];
 			for (const r of [...R.exps.values()].sort((a, b) => a.num.localeCompare(b.num)))
 				rows.push(
-					`| ${link(from, r.file, `EXP-${r.num}`)} | ${expBadge(r.meta.status)} | ${str(r.meta.started)} | ${area(R, r.meta.area)} | ${md(r.meta.question)} ` +
+					`| ${nw(link(from, r.file, `EXP-${r.num}`))} | ${expBadge(r.meta.status)} | ${day(r.meta.started)} | ${area(R, r.meta.area)} | ${md(r.meta.question)} ` +
 						`| ${md(r.title)} | ${list(r.meta.adr).map((a) => adrRef(R, from, a)).join(', ')} | ${issues(R, r.meta.issues)} |`,
 				);
 			return rows.join('\n') + `\n\n총 ${R.exps.size}건: ${counts(R.exps.values(), 'status', EXP_STATUS)}`;
@@ -472,7 +476,7 @@ export function recordMarkers(cfg: KitConfig, page: { url: string }): Record<str
 			const rows = ['| 번호 | 제목 | 종류 | 독자 | 날짜 | 상태 |', '| --- | --- | --- | --- | --- | --- |'];
 			for (const r of [...R.pubs.values()].sort((a, b) => a.num.localeCompare(b.num)))
 				rows.push(
-					`| ${link(from, r.file, `P-${r.num}`)} | ${md(r.title)} | ${kindBadge(r.meta.kind)} | ${md(r.meta.audience)} | ${str(r.meta.date)} | ${PUB_STATUS[r.meta.status] ?? str(r.meta.status)} |`,
+					`| ${nw(link(from, r.file, `P-${r.num}`))} | ${md(r.title)} | ${kindBadge(r.meta.kind)} | ${md(r.meta.audience)} | ${day(r.meta.date)} | ${PUB_STATUS[r.meta.status] ?? str(r.meta.status)} |`,
 				);
 			return rows.join('\n');
 		};

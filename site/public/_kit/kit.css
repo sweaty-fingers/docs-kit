@@ -265,6 +265,7 @@ img { max-width: 100%; height: auto; }
 .kit-table td { border-top: 1px solid var(--kit-border); }
 .kit-table tr:first-child td { border-top: 0; }
 .kit-table td code { white-space: nowrap; }
+.kit-nowrap { white-space: nowrap; }
 
 /* code: Shiki dual themes, copy button added by kit.js */
 .kit-code { position: relative; margin: 1.2em 0; }
