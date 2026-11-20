@@ -1,0 +1,93 @@
+/* Document map (graph/viewer/). Base look (top bar, panel, theme tokens) from ../../roadmap/viewer/viewer.css.
+   Kind colours: the reference categorical palette, light and dark steps chosen separately (dataviz skill). */
+[data-theme="light"] {
+  --k1: #2a78d6; --k2: #eb6834; --k3: #1baf7a; --k4: #eda100; --k5: #e87ba4; --k6: #008300; --k7: #6250d6; --k0: #8e8e96;
+  --edge-link: rgba(60, 60, 70, 0.22); --edge-rel: rgba(40, 40, 50, 0.62); --edge-sim: rgba(192, 118, 63, 0.55);
+  --label: #121214; --label-halo: rgba(253, 253, 247, 0.92);
+}
+[data-theme="dark"] {
+  --k1: #3987e5; --k2: #d95926; --k3: #199e70; --k4: #c98500; --k5: #d55181; --k6: #008300; --k7: #9085e9; --k0: #77777f;
+  --edge-link: rgba(230, 230, 235, 0.16); --edge-rel: rgba(235, 235, 240, 0.55); --edge-sim: rgba(212, 162, 127, 0.6);
+  --label: #ededed; --label-halo: rgba(13, 12, 10, 0.9);
+}
+.bar { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; padding: 7px 16px; border-bottom: 1px solid var(--line);
+  background: var(--panel); flex: none; font-size: 12.5px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--card);
+  border-radius: 999px; padding: 3px 10px 3px 8px; cursor: pointer; color: var(--text); font-size: 12.5px; user-select: none; }
+.chip:hover { border-color: var(--accent); }
+.chip.off { opacity: 0.42; text-decoration: line-through; }
+/* swatches: the sky colours of graph.js (SKY); hollow = index pages */
+:root { --s0: #8d94b0; --s1: #5aa2ff; --s2: #ff8a52; --s3: #3fe0a6; --s4: #ffc53d; --s5: #ff8fc0; --s6: #45d16e; --s7: #ab9dff; }
+.chip .sw { position: relative; width: 10px; height: 10px; border-radius: 50%; flex: none; background: var(--c);
+  box-shadow: 0 0 6px var(--c); }
+.chip .sw.ring { background: transparent; border: 2px solid var(--c); box-shadow: none; }
+.chip .ln { width: 20px; height: 0; border-top: 2px solid var(--muted); }
+.chip .ln.rel { border-top-width: 3px; }
+.chip .ln.sim { border-top: 2px dashed var(--accent); }
+.chip .n { color: var(--faint); font-size: 11px; }
+.opt { display: inline-flex; gap: 5px; align-items: center; color: var(--muted); cursor: pointer; }
+.gcanvas { flex: 1; min-width: 0; position: relative; overflow: hidden; }
+.gcanvas canvas { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+.gcanvas canvas.dragging { cursor: grabbing; }
+.gcanvas canvas.on-node { cursor: pointer; }
+.gcanvas .status { position: absolute; left: 16px; top: 10px; color: var(--muted); margin: 0; }
+.tip { position: absolute; pointer-events: none; background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+  padding: 6px 9px; font-size: 12.5px; box-shadow: var(--shadow); max-width: 320px; z-index: 4; }
+.tip .k { color: var(--faint); font-size: 11.5px; }
+.drawer .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; flex: none; transform: translateY(-1px); }
+.drawer li { cursor: default; }
+.drawer li .why { display: block; color: var(--faint); font-size: 11.5px; margin-top: 2px; }
+.drawer li > span { min-width: 0; }
+.drawer .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0 4px; }
+.drawer .stat { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: var(--card); }
+.drawer .stat b { display: block; font-size: 18px; }
+.drawer .stat span { color: var(--muted); font-size: 11.5px; }
+.drawer .tagline { color: var(--muted); font-size: 12.5px; margin: 4px 0 0; }
+.drawer .lab { color: var(--faint); font-size: 11.5px; margin-left: auto; flex: none; padding-left: 8px; }
+.drawer .btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.drawer button.btn { cursor: pointer; }
+@media (max-width: 760px) { .bar { padding: 6px 10px; } .opt { display: none; } }
+/* the map is a night sky in both themes (graph.js draws it); the hover card floats on it */
+.gcanvas { background: #070a16; }
+.tip { background: rgba(14, 19, 40, 0.88); color: #e4eaff; border-color: rgba(200, 212, 255, 0.18);
+  backdrop-filter: blur(6px); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5); }
+.tip .k { color: #9aa6cc; }
+/* topics: chips and the panel line; swatches of the dimension that is not the colour are muted */
+.chip .sw.mute { background: transparent; box-shadow: none; border: 1.5px solid var(--faint); }
+#topics { padding-right: 12px; border-right: 1px solid var(--line); }
+#topics[hidden] { display: none; }
+.drawer .topicline { margin: 6px 0 8px; font-size: 12.5px; line-height: 1.9; }
+.tchip { display: inline-block; padding: 0 8px; border-radius: 999px; border: 1px solid var(--c); color: var(--text);
+  background: color-mix(in srgb, var(--c) 18%, transparent); font-size: 12px; }
+.drawer .tsrc { color: var(--faint); font-size: 11.5px; }
+.drawer .tsrc.warn { color: var(--accent); }
+
+/* ---- ask the documents (bin/docs_ask.py): question bar, ranked layout, answer panel ---- */
+.askbar { display: flex; gap: 8px; align-items: center; padding: 7px 16px; border-bottom: 1px solid var(--line); background: var(--panel); flex: none; }
+.askbar .asklab { font-weight: 800; font-size: 13px; color: var(--accent); }
+.askbar input { flex: 1; min-width: 8rem; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 13.5px; }
+.askbar input:focus { outline: none; border-color: var(--accent); }
+.askbar .btn { cursor: pointer; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--text); border-radius: 8px; padding: 5px 12px; font-size: 13px; }
+.askbar .btn.ghost { border-color: var(--line); background: none; }
+.askstate { color: var(--faint); font-size: 12px; white-space: nowrap; }
+.drawer .answer { margin: 10px 0 6px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); font-size: 13.5px; line-height: 1.7; }
+.drawer .answer .s { display: block; margin: 2px 0; }
+.drawer .answer .v { display: inline-block; min-width: 1.4em; font-weight: 800; }
+.drawer .answer .supported .v { color: #4cc38a; } .drawer .answer .unverified .v { color: #e0b040; }
+.drawer .answer .unsupported .v { color: #ff6b5e; } .drawer .answer .none .v { color: var(--faint); }
+.drawer .answer .unsupported { text-decoration: line-through; text-decoration-color: rgba(255, 107, 94, 0.6); }
+.drawer .answer .miss { display: block; font-size: 11.5px; color: #e0b040; margin-left: 1.4em; }
+.drawer .answer .cite { color: var(--accent); cursor: pointer; font-weight: 700; }
+.drawer .verdicts { font-size: 11.5px; color: var(--muted); margin: 4px 0 0; }
+.drawer .ev { border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; margin: 6px 0; background: var(--card); font-size: 12.5px; }
+.drawer .ev.hl { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.drawer .ev .eh { display: flex; gap: 6px; align-items: baseline; }
+.drawer .ev .rk { font-weight: 800; color: var(--accent); min-width: 1.6em; }
+.drawer .ev .loc { font-family: var(--mono); font-size: 11px; color: var(--faint); word-break: break-all; }
+.drawer .ev details summary { cursor: pointer; color: var(--muted); font-size: 11.5px; }
+.drawer .ev pre { white-space: pre-wrap; font-size: 11.5px; max-height: 16rem; overflow: auto; margin: 4px 0 0; color: var(--text); }
+.drawer .note { font-size: 12px; color: var(--muted); }
+.drawer .warnbox { font-size: 12px; color: #e0b040; border: 1px solid rgba(224, 176, 64, 0.4); border-radius: 8px; padding: 6px 9px; margin: 8px 0; }
+.askbar [hidden] { display: none !important; }
+.askstate { white-space: normal; max-width: 40rem; }

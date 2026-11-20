@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>스프린트 보드</title>
+  <!-- Sprint board (kanban). Data: data.js, written by docs-kit hooks/plan.py from docs/plan/scope.yml (cards),
+       docs/plan/sprints.json (sprints), the roadmap and the issue snapshot (status). Moving cards saves to
+       sprints.json through .docs-kit/bin/serve.sh board (only from the development preview); elsewhere the board is read-only.
+       Guide: ../guide.md §5 -->
+  <link rel="stylesheet" href="board.css">
+  <script>
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem("docs-kit-board-theme"); } catch (e) {}
+      if (!t) t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", t);
+    })();
+  </script>
+</head>
+<body>
+  <header class="top">
+    <a class="back" href="../index.html#단계별-진행" title="현황판으로">← 현황판</a>
+    <span class="logo">스프린트 보드</span>
+    <div class="nav">
+      <button id="prev" type="button" title="이전 스프린트" aria-label="이전 스프린트">◀</button>
+      <select id="sprint" aria-label="스프린트"></select>
+      <button id="next" type="button" title="다음 스프린트" aria-label="다음 스프린트">▶</button>
+      <span id="sstate" class="chip"></span>
+      <span id="sdates" class="muted"></span>
+    </div>
+    <div class="tools">
+      <button id="plan" type="button" class="btn">다음 스프린트 만들기</button>
+      <button id="start" type="button" class="btn">스프린트 시작</button>
+      <button id="close" type="button" class="btn">스프린트 마감</button>
+      <button id="lanes" type="button" class="btn" title="할 일·진행 중·검토·완료를 단계(Epic)별 가로줄로 나누기">줄: 단계별</button>
+      <button id="export" type="button" class="btn" title="저장 서버 없이 바꾼 것을 JSON으로 복사">내보내기</button>
+      <span id="save" class="save"></span>
+      <button id="theme" type="button" class="btn icon" title="밝게 / 어둡게" aria-label="밝게 / 어둡게">◐</button>
+    </div>
+  </header>
+  <div class="goalbar">
+    <label for="goal">목표</label>
+    <input id="goal" type="text" placeholder="이번 스프린트가 끝나면 무엇이 되어 있어야 하나 (한 문장)">
+    <span id="stats" class="muted"></span>
+  </div>
+  <div id="banner" class="banner" hidden></div>
+  <main>
+    <aside class="backlog" data-col="backlog">
+      <div class="aside-h">
+        <b>백로그</b> <span class="muted small">스프린트에 없는 일. 오른쪽 칸으로 끌어 넣습니다</span>
+      </div>
+      <div class="filters">
+        <input id="q" type="search" placeholder="찾기 (이름, #이슈, ID)" aria-label="찾기">
+        <select id="fepic" aria-label="단계"></select>
+        <select id="fwave" aria-label="시기">
+          <option value="">시기 전체</option><option value="now">지금</option><option value="next">다음</option><option value="later">나중</option>
+        </select>
+      </div>
+      <div id="backlog" class="list drop" data-col="backlog"></div>
+    </aside>
+    <section id="board" class="board"></section>
+    <aside id="panel" class="panel" hidden></aside>
+  </main>
+  <footer class="foot">
+    <details id="retro-box">
+      <summary>회고 (스프린트를 마감할 때 세 줄)</summary>
+      <div class="retro">
+        <label>잘된 것<textarea id="r-good" rows="2"></textarea></label>
+        <label>문제<textarea id="r-problem" rows="2"></textarea></label>
+        <label>다음에 해 볼 것<textarea id="r-try" rows="2"></textarea></label>
+      </div>
+    </details>
+    <div id="vel" class="vel"></div>
+  </footer>
+  <script src="data.js"></script>
+  <script src="board.js"></script>
+</body>
+</html>

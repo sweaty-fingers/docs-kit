@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>로드맵</title>
+  <!-- Standalone roadmap viewer. Data: data.js (written by docs-kit hooks/roadmap.py from
+       docs/roadmap/roadmap.yml). Editing guide: ../guide.md -->
+  <link rel="stylesheet" href="../../_kit/stylesheets/roadmap.css">
+  <link rel="stylesheet" href="viewer.css">
+  <script>
+    // Theme before first paint: saved choice, else the system setting. Embedded (?embed=1): follow the
+    // docs page's Material scheme, and keep following it when the reader toggles the page theme.
+    (function () {
+      var root = document.documentElement, t = null;
+      try { t = localStorage.getItem("docs-kit-roadmap-theme"); } catch (e) {}
+      if (!t) t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      root.setAttribute("data-theme", t);
+      if (!/[?&]embed=1/.test(location.search)) return;
+      root.classList.add("embed");
+      var body = null;
+      try { if (window.parent !== window) body = window.parent.document.body; } catch (e) {}
+      if (!body) return;
+      function sync() {
+        var s = body.getAttribute("data-md-color-scheme");
+        if (s) root.setAttribute("data-theme", s === "slate" ? "dark" : "light");
+      }
+      sync();
+      new MutationObserver(sync).observe(body, { attributes: true, attributeFilter: ["data-md-color-scheme"] });
+    })();
+  </script>
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <a class="back" href="../index.html" title="문서로 돌아가기">← 문서</a>
+      <span class="logo" id="title">로드맵</span>
+    </div>
+    <div class="tools">
+      <input id="q" type="search" placeholder="찾기 (제목, 문서, #이슈)" aria-label="찾기">
+      <select id="unit" aria-label="업무"></select>
+      <select id="status" aria-label="상태">
+        <option value="">모든 상태</option>
+        <option value="done">완료</option>
+        <option value="doing">진행 중</option>
+        <option value="plan">예정 (다음 · 그다음 · 나중)</option>
+        <option value="dropped">취소</option>
+      </select>
+      <button class="icon" id="zout" title="축소">−</button>
+      <button class="icon" id="zfit" title="화면 폭에 맞춤">↔</button>
+      <button class="icon" id="zin" title="확대">+</button>
+      <button class="icon" id="theme" title="밝게/어둡게"><svg viewBox="0 0 16 16" width="15" height="15"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M8 2.5a5.5 5.5 0 0 1 0 11z" fill="currentColor"/></svg></button>
+      <a class="icon" id="newtab" href="index.html" target="_blank" title="새 창에서 크게 보기"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M9 2h5v5M14 2 7 9M12 10v4H2V4h4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    </div>
+  </header>
+  <main class="main">
+    <section class="canvas" id="canvas" aria-label="로드맵 노선도">
+      <div class="stage" id="stage"><p class="status">불러오는 중… (data.js가 없으면 문서를 다시 빌드하세요)</p></div>
+      <div class="legend">
+        <span class="rm-l rm-l-done">완료</span><span class="rm-l rm-l-doing">진행 중</span>
+        <span class="rm-l rm-l-plan">예정</span><span class="rm-l rm-l-merge">합류</span>
+        <span class="lg-line"><i class="solid"></i>같은 트랙</span><span class="lg-line"><i class="dash"></i>다른 트랙에서</span>
+        <span class="hint">역을 누르면 상세</span>
+      </div>
+    </section>
+    <aside class="drawer" id="drawer" aria-label="상세" hidden></aside>
+  </main>
+  <script src="data.js"></script>
+  <script src="viewer.js"></script>
+</body>
+</html>

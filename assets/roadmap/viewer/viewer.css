@@ -1,0 +1,94 @@
+/* Standalone roadmap viewer (roadmap/viewer/). The map's own styles are _kit/stylesheets/roadmap.css, which
+   reads the Material theme variables; they are defined here for both themes. Look follows the C4 viewer. */
+:root {
+  --font: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic",
+    "Noto Sans KR", "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", "D2Coding", "SFMono-Regular", Menlo, Consolas, monospace;
+  --md-text-font-family: var(--font);
+}
+[data-theme="light"] {
+  --bg: #fdfdf7; --panel: #fdfdf7; --card: #ffffff; --line: #e4e2d8; --line-soft: #edebe3;
+  --text: #121214; --muted: #5c5c66; --faint: #8e8e96; --accent: #c0763f; --accent-soft: rgba(192, 118, 63, 0.1);
+  --shadow: 0 8px 30px rgba(60, 40, 20, 0.08);
+  --md-default-bg-color: #fdfdf7; --md-default-fg-color: rgba(0, 0, 0, 0.87); --md-default-fg-color--light: rgba(0, 0, 0, 0.56);
+  --md-default-fg-color--lighter: rgba(0, 0, 0, 0.32); --md-default-fg-color--lightest: rgba(0, 0, 0, 0.07);
+  --md-accent-fg-color: #c0763f;
+}
+[data-theme="dark"] {
+  --bg: #0d0c0a; --panel: #13120f; --card: #1a1815; --line: #2f2c27; --line-soft: #25231f;
+  --text: #ededed; --muted: #9a9aa2; --faint: #6b6b73; --accent: #d4a27f; --accent-soft: rgba(212, 162, 127, 0.14);
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  --md-default-bg-color: #0d0c0a; --md-default-fg-color: rgba(237, 237, 237, 0.92); --md-default-fg-color--light: rgba(237, 237, 237, 0.62);
+  --md-default-fg-color--lighter: rgba(237, 237, 237, 0.32); --md-default-fg-color--lightest: rgba(237, 237, 237, 0.1);
+  --md-accent-fg-color: #d4a27f;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { font-family: var(--font); color: var(--text); background: var(--bg); font-size: 14px; line-height: 1.5;
+  display: flex; flex-direction: column; overflow: hidden; -webkit-font-smoothing: antialiased; }
+a { color: inherit; }
+button, select, input { font: inherit; color: inherit; }
+
+.top { display: flex; align-items: center; gap: 14px; padding: 9px 16px; border-bottom: 1px solid var(--line);
+  background: var(--panel); flex: none; }
+.brand { display: flex; align-items: center; gap: 10px; white-space: nowrap; flex: 1; min-width: 0; }
+.back { text-decoration: none; color: var(--muted); font-size: 13px; padding: 4px 8px; border-radius: 8px; }
+.back:hover { color: var(--text); background: var(--accent-soft); }
+.logo { font-weight: 800; overflow: hidden; text-overflow: ellipsis; }
+.embed .brand { visibility: hidden; }
+.tools { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.tools select, .tools input { background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+  padding: 5px 8px; font-size: 13px; max-width: 220px; }
+.tools input { width: 190px; }
+.icon { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; padding: 0 6px;
+  border: 1px solid var(--line); background: var(--card); border-radius: 8px; cursor: pointer; text-decoration: none;
+  color: var(--muted); font-size: 15px; }
+.icon:hover { color: var(--text); border-color: var(--accent); }
+
+.main { flex: 1; display: flex; min-height: 0; position: relative; }
+.canvas { flex: 1; min-width: 0; overflow: auto; position: relative; display: flex; flex-direction: column; }
+.stage { padding: 12px; flex: none; }
+.stage .status { color: var(--muted); }
+.stage svg.rm-svg { display: block; }
+.rm-svg .rm-sel .rm-box { stroke-width: 4; filter: drop-shadow(0 0 5px var(--accent)); }
+.legend { position: sticky; left: 0; bottom: 0; margin-top: auto; display: flex; flex-wrap: wrap; gap: 4px 14px;
+  align-items: center; padding: 7px 14px; font-size: 12px; color: var(--muted); background: var(--panel);
+  border-top: 1px solid var(--line); }
+.legend .lg-line i { display: inline-block; width: 22px; margin-right: 5px; vertical-align: middle;
+  border-top: 3px solid var(--muted); }
+.legend .lg-line i.dash { border-top: 2px dashed var(--muted); }
+.legend .hint { font-style: italic; }
+
+.drawer { flex: none; width: 400px; max-width: 100%; border-left: 1px solid var(--line); background: var(--panel);
+  overflow-y: auto; padding: 18px 20px 40px; box-shadow: var(--shadow); }
+.drawer[hidden] { display: none; }
+.drawer .close { position: sticky; top: 0; float: right; border: 0; background: transparent; color: var(--muted);
+  font-size: 22px; line-height: 1; cursor: pointer; }
+.drawer .close:hover { color: var(--text); }
+.drawer .kicker { font-size: 12px; color: var(--faint); }
+.drawer h2 { margin: 4px 0 8px; font-size: 20px; line-height: 1.35; letter-spacing: -0.02em; }
+.drawer .meta { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 12.5px; color: var(--muted); }
+.drawer .meta .trk { display: inline-flex; gap: 4px; }
+.drawer p.sum { margin: 12px 0; }
+.drawer h3 { margin: 22px 0 8px; font-size: 11px; letter-spacing: 0.08em; color: var(--faint); font-weight: 700; }
+.drawer ul, .drawer ol { margin: 0; padding: 0; list-style: none; }
+.drawer li { padding: 5px 0; border-bottom: 1px solid var(--line-soft); font-size: 13px; display: flex; gap: 8px;
+  align-items: baseline; }
+.drawer li .dir { color: var(--faint); font-size: 11.5px; flex: none; width: 2.2em; }
+.drawer li .ref { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--faint); flex: none; }
+.drawer li.cur { font-weight: 700; }
+.drawer a.go { text-decoration: none; border-bottom: 1px solid var(--line); cursor: pointer; }
+.drawer a.go:hover { color: var(--accent); border-color: var(--accent); }
+.drawer .grp { margin-bottom: 12px; }
+.drawer .grp-h { font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 2px; }
+.drawer .none { color: var(--faint); font-size: 13px; }
+.btn { display: inline-block; border: 1px solid var(--line); background: var(--card); border-radius: 8px;
+  padding: 5px 10px; font-size: 13px; text-decoration: none; margin-top: 4px; }
+.btn:hover { border-color: var(--accent); }
+
+@media (max-width: 760px) {
+  .top { flex-wrap: wrap; gap: 8px; padding: 8px 12px; }
+  .tools input { width: 130px; }
+  .drawer { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 65%; border-left: 0;
+    border-top: 1px solid var(--line); z-index: 5; }
+}

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>문서 지도</title>
+  <!-- Standalone document map. Data: data.js (written after the build by docs-kit hooks/graph.py).
+       Top bar, panel and theme are shared with the roadmap viewer (../../roadmap/viewer/viewer.css). -->
+  <link rel="stylesheet" href="../../roadmap/viewer/viewer.css">
+  <link rel="stylesheet" href="graph.css">
+  <script>
+    // The map is a night sky, so the whole viewer stays dark (also when embedded in a light docs page).
+    document.documentElement.setAttribute("data-theme", "dark");
+    if (/[?&]embed=1/.test(location.search)) document.documentElement.classList.add("embed");
+  </script>
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <a class="back" href="../index.html" title="문서로 돌아가기">← 문서</a>
+      <span class="logo">문서 지도</span>
+    </div>
+    <div class="tools">
+      <input id="q" type="search" placeholder="찾기 (제목, ADR-0001, G1)" aria-label="찾기">
+      <select id="group" aria-label="모으기"><option value="topic">모으기: 주제</option><option value="link">모으기: 링크만</option><option value="k">모으기: 종류</option></select>
+      <select id="color" aria-label="색 기준"><option value="topic">색: 주제</option><option value="k">색: 종류</option><option value="area">색: 분야</option></select>
+      <select id="depth" aria-label="주변만 보기" title="고른 문서 주변만 보기">
+        <option value="0">전체</option><option value="1">주변 1단계</option><option value="2">주변 2단계</option><option value="3">주변 3단계</option>
+      </select>
+      <button class="icon" id="zout" title="축소">−</button>
+      <button class="icon" id="zfit" title="화면에 맞춤">⤢</button>
+      <button class="icon" id="zin" title="확대">+</button>
+      <a class="icon" id="newtab" href="index.html" target="_blank" title="새 창에서 크게 보기"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M9 2h5v5M14 2 7 9M12 10v4H2V4h4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    </div>
+  </header>
+  <form class="askbar" id="askform" autocomplete="off">
+    <span class="asklab">질문</span>
+    <input id="ask" type="search" placeholder="문서에 물어보기: 예) 이 값은 얼마이고 왜 그렇게 정했나" aria-label="문서에 질문">
+    <button class="btn" type="submit" id="askgo">찾기·답하기</button>
+    <button class="btn ghost" type="button" id="askclear" hidden>지우기</button>
+    <span class="askstate" id="askstate"></span>
+  </form>
+  <div class="bar" id="bar">
+    <div class="chips" id="topics" aria-label="주제 (눌러서 숨기기)"></div>
+    <div class="chips" id="kinds" aria-label="문서 종류 (눌러서 숨기기)"></div>
+    <div class="chips" id="edges" aria-label="선 종류"></div>
+  </div>
+  <main class="main">
+    <section class="gcanvas" id="wrap" aria-label="문서 지도">
+      <canvas id="cv"></canvas>
+      <div class="tip" id="tip" hidden></div>
+      <p class="status" id="status">불러오는 중… (data.js가 없으면 문서를 다시 빌드하세요)</p>
+    </section>
+    <aside class="drawer" id="drawer" aria-label="상세"></aside>
+  </main>
+  <script src="data.js"></script>
+  <script src="graph.js"></script>
+</body>
+</html>

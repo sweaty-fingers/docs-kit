@@ -1,0 +1,1 @@
+{"questions": [{"q": "첫 결정", "expect": ["docs/adr/0001-record-architecture-decisions.md"]}]}

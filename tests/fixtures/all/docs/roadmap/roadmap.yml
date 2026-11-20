@@ -1,0 +1,10 @@
+title: 시험 로드맵
+tracks:
+  - {id: a, name: 갈래 A, color: "#d1495b"}
+  - {id: b, name: 갈래 B, color: "#2f7ed8"}
+units:
+  - {id: u, name: 시험 업무}
+items:
+  - {id: a1, title: 첫째, track: a, unit: u, status: done, date: 2026-01-05, refs: [ADR-0001]}
+  - {id: b1, title: 둘째, track: b, unit: u, status: done, date: 2026-01-06}
+  - {id: ab, title: 합친 일, track: [a, b], unit: u, status: next, after: [a1, b1]}

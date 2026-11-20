@@ -1,0 +1,2 @@
+risks:
+  - {id: R01, title: 시험 리스크, category: 일정, response: mitigate, status: open, history: [{date: 2026-01-05, p: 4, i: 5}]}

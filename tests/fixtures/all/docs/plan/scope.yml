@@ -1,0 +1,8 @@
+title: 시험 범위
+start: 2026-01-05
+items:
+  - {id: E1, level: epic, title: 단계 1, dod: [{text: 통과, met: partial, evidence: [ADR-0001]}]}
+  - {id: W1, level: wbs, parent: E1, roadmap: a1, size: 2, dod: [끝남]}
+  - {id: W2, level: wbs, parent: E1, title: 먼 일, status: todo, size: [3, 6], wave: later, dod: [끝남]}
+questions:
+  - {id: RQ1, title: 질문, status: investigating, confidence: low, evidence: [ADR-0001]}
