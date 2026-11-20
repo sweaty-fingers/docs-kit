@@ -199,7 +199,7 @@ arc42에 없는, 연구에 필요한 정본입니다. 번호(A~D)와 위치는 �
 
 | 항목 | 규칙 |
 | --- | --- |
-| 도구 | 문서 검색 `bin/docs_search.py`(절 단위, BM25 + 한국어 글자 2-gram, 대체된 기록 표시), 근거 점검 `bin/docs_check.py`(`--changed`: 바뀐 문서만, `--record`: 날짜별 기록). 표준 라이브러리만, 사내망 밖으로 보내는 것 없음 |
+| 도구 | 문서 검색 `bin/docs_search.py`(절 단위, BM25 + 한국어 글자 2-gram, 대체된 기록 표시), 근거 점검 `bin/docs_check.py`(`--changed`: 바뀐 문서만, `--record`: 날짜별 기록). 표준 라이브러리만 |
 | 판정 | 틀림(가리킨 문서·이슈·경로·포트가 없음), 확인 못 함(코드·원 출력·VR에서 못 찾은 이름·옵션·수치, 계획된 경로), 낡음(대체된 기록만 인용, 코드가 문서보다 나중에 바뀜) |
 | 파일 | `docs/quality/config.json`(외부·계획 경로, 포트 표 `ports_doc`, 모델 서버 시작 안내 `embed_start`·`llm_start`, 질문 서버 `ask`), `questions.json`(검색 평가), `history.json`(추이), `incidents.json`(사례) |
 | 쓰는 때 | 문서를 고친 뒤 `--changed`로 틀림 0, 주간 보고 때 `--record`. 기록 문서(ADR·VR·주간 보고)는 고치지 않고 새 문서로 바로잡음 |

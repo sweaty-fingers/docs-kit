@@ -1,5 +1,5 @@
 # docs-kit site image: Node LTS + the site's packages (prd.md §6.1). bin/docs.sh builds it once
-# (tag docs-kit-site:<hash of site/package-lock.json, this file and run.sh>) and then runs offline: the project is
+# (tag docs-kit-site:<hash of site/package-lock.json, this file and run.sh>) and reuses it: the project is
 # mounted at /docs, the kit at /kit (read-only); run.sh copies /kit/site next to the packages and runs Astro.
 # Build context: the kit root.  docker build -t docs-kit-site -f docker/Dockerfile .
 # Pin by digest for a mirror: FROM node:24-bookworm-slim@sha256:<digest>

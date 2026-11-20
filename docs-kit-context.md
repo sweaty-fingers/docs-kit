@@ -2,7 +2,7 @@
 
 이 문서는 docs-kit **전체를 다른 세션·다른 환경에서 그대로 다시 만들거나 이어서 고칠 수 있도록** 구조, 동작, 형식, 도구, 시험, 에이전트 운영을 한곳에 적은 명세입니다. 에이전트가 처음 읽는 문서로 씁니다.
 
-> **`astro` 브랜치**: 사이트 엔진을 Astro로 다시 만드는 중입니다([prd.md](prd.md), 진행 상태 [site/README.md](site/README.md), 결정 [decisions/0001](decisions/0001-astro-engine.md)). 아래 §3~§4, §7의 MkDocs 훅 설명은 지금 판(main)의 동작 기준이며 M8에서 새 판 명세로 고칩니다. 탭 목록(§5.2~§5.3)은 `site/src/config/features.json`이 원천입니다.
+> **0.16부터 사이트 엔진은 Astro입니다**(`main`; MkDocs 판은 태그 `v0.15.4`). 남은 탭 모듈을 옮기는 중입니다([prd.md](prd.md), 진행 상태 [site/README.md](site/README.md), 결정 [decisions/0001](decisions/0001-astro-engine.md)). 아래 §3~§4, §7의 MkDocs 훅 설명은 지금 판(main)의 동작 기준이며 M8에서 새 판 명세로 고칩니다. 탭 목록(§5.2~§5.3)은 `site/src/config/features.json`이 원천입니다.
 
 > 기준: docs-kit 0.15.4, 2026-11-20. 키트 동작을 바꾸면 이 문서의 해당 절도 같은 커밋에서 고칩니다(AGENTS-GUIDE §7).
 
@@ -25,7 +25,7 @@
 | R6 | 제안 먼저, 사용자 승인 뒤 작업 | AGENTS-GUIDE 원칙 1, 제안서 형식 §4 |
 | R7 | 프로젝트에서 바꾼 형식이 키트에 반영되어 늘 최신 | AGENTS.md 템플릿 D6, AGENTS-GUIDE §7: 공통 형식은 키트에서 고치고 키트 먼저 push. `kit.py check --fetch`가 새 버전을 알리고 `kit.py update`로 받음 |
 | R8 | 에이전트가 일관되게 키트를 씀 | `template/agents/AGENTS.docs-kit.md`(프로젝트 AGENTS.md에 넣는 절, 탭별 항목 `[탭: id]`) |
-| R9 | 사내망만, 외부 인터넷 없이 동작 | MathJax·Mermaid·ELK를 키트에 내장, 외부 스크립트 금지(selftest가 검사), 로컬 모델 서버는 127.0.0.1 |
+| R9 | (2026-11-20 해제) 원래는 사내망만, 외부 인터넷 없이 동작 | 지금은 외부 요청 허용(prd.md §0). 라이브러리는 고정 버전으로 사이트에 싣는 것이 기본 |
 | R10 | 호스트에 설치 최소 | 사이트는 고정 Docker 이미지, 호스트 도구는 Python 3.8 표준 라이브러리만 |
 | R11 | 할루시네이션을 줄이는 근거 체계 | 문서 검색(`docs_search.py`), 근거 점검(`docs_check.py` + 근거 점검 탭), 질문 답의 문장별 인용 점검(`docs_ask.py`) |
 | R12 | 빌드 경고 0 = 문서 작업 끝 | 모든 훅이 형식 위반을 MkDocs `WARNING`으로 냄 |
