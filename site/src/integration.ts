@@ -31,6 +31,10 @@ function vendorFiles(): Map<string, string> {
 	for (const f of fs.readdirSync(path.join(mer, 'chunks', 'mermaid.esm.min')))
 		if (!f.endsWith('.map')) m.set(`_kit/vendor/mermaid/chunks/mermaid.esm.min/${f}`, path.join(mer, 'chunks', 'mermaid.esm.min', f));
 	m.set('_kit/vendor/mermaid/LICENSE', path.join(path.dirname(mer), 'LICENSE'));
+	// elkjs (npm) for the C4 viewer, over the copy that the MkDocs edition vendored in assets/adr/viewer/vendor/
+	const elk = path.dirname(require.resolve('elkjs/package.json'));
+	m.set('adr/viewer/vendor/elk.bundled.js', path.join(elk, 'lib', 'elk.bundled.js'));
+	if (fs.existsSync(path.join(elk, 'LICENSE.md'))) m.set('adr/viewer/vendor/elkjs-LICENSE.txt', path.join(elk, 'LICENSE.md'));
 	// JetBrains Mono (OFL-1.1, @fontsource-variable): code blocks
 	const jb = path.dirname(require.resolve('@fontsource-variable/jetbrains-mono/package.json'));
 	m.set('_kit/vendor/jetbrains-mono/index.css', path.join(jb, 'index.css'));

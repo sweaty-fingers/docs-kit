@@ -3,6 +3,7 @@
 // tabs that the Astro edition does not build yet (milestones M4-M6), so a page shows that something will be there.
 import { BY_ID, enabled, FEATURES, PROFILES, type KitConfig } from '../config/load.ts';
 import { escapeHtml, type MarkerHandler } from '../markdown/pre.ts';
+import { recordMarkers } from './records.ts';
 
 interface Ctx {
 	page: { rel: string; url: string };
@@ -100,9 +101,16 @@ export function markerHandlers(ctx: Ctx): Record<string, MarkerHandler> {
 		'short-links': () => shortLinks(ctx),
 		rerun: (args, opts) => (args ? rerunBox(ctx, args.split(/\s+/)[0], opts) : null),
 	};
-	for (const [name, [tab, milestone]] of Object.entries(PENDING))
+	// tabs built so far (M4): their markers come from the tab module when the tab is on
+	const DONE = new Set(['adr', 'records', 'experiments', 'arc42', 'publications']);
+	for (const [name, [tab, milestone]] of Object.entries(PENDING)) {
+		if (DONE.has(tab)) {
+			h[name] = () => `<div class="kit-pending">${escapeHtml(BY_ID[tab].title)} 탭이 꺼져 있습니다(<code>.docs-kit/bin/kit.py enable ${tab}</code>).</div>`;
+			continue;
+		}
 		h[name] = (args) =>
 			`<div class="kit-pending" data-marker="${name}">표시 줄 <code>&lt;!-- ${name}${args ? ': ' + escapeHtml(args) : ''} --&gt;</code>: ` +
 			`${escapeHtml(BY_ID[tab].title)} 탭의 표·그림은 Astro 판 ${milestone} 단계에서 만들어집니다.</div>`;
-	return h;
+	}
+	return { ...h, ...recordMarkers(ctx.cfg, ctx.page) };
 }

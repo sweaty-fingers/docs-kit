@@ -259,7 +259,8 @@ img { max-width: 100%; height: auto; }
 /* tables: wide ones scroll on their own (FR-UI-5) */
 .kit-table { overflow-x: auto; margin: 1.2em 0; border: 1px solid var(--kit-border); border-radius: var(--kit-radius); -webkit-overflow-scrolling: touch; }
 .kit-table table { border-collapse: collapse; width: 100%; font-size: 14.5px; line-height: 1.6; }
-.kit-table th, .kit-table td { padding: 8px 12px; text-align: left; vertical-align: top; }
+.kit-table th, .kit-table td { padding: 8px 12px; text-align: left; vertical-align: top; overflow-wrap: break-word; }
+/* 'anywhere' (body text) would let a column shrink to one character; in cells long words still break, short ones keep */
 .kit-table th { background: var(--kit-subtle); font-weight: 650; border-bottom: 1px solid var(--kit-border); white-space: nowrap; }
 .kit-table td { border-top: 1px solid var(--kit-border); }
 .kit-table tr:first-child td { border-top: 0; }
@@ -322,6 +323,50 @@ img { max-width: 100%; height: auto; }
 	margin: 1.2em 0; padding: 12px 16px; border: 1px dashed var(--kit-border); border-radius: var(--kit-radius);
 	color: var(--kit-muted); font-size: 14px; background: var(--kit-subtle);
 }
+
+/* ---- record cards and badges (ADR, VR, EXP, arc42, P; site/src/lib/records.ts) ------------------- */
+.kit-card {
+	display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0 0 24px; padding: 12px 16px;
+	border: 1px solid var(--kit-border); border-radius: var(--kit-radius); background: var(--kit-subtle); font-size: 14.5px; line-height: 1.6;
+}
+.kit-card dt { font-weight: 700; margin: 0; color: var(--kit-muted); }
+.kit-card dd { margin: 0; min-width: 0; }
+@media (max-width: 480px) { .kit-card { grid-template-columns: 1fr; gap: 0 0; } .kit-card dd { margin-bottom: 8px; } }
+.vr-meta--superseded { opacity: 0.8; border-style: dashed; }
+.adr-status, .vr-result, .exp-status, .arc-status, .pub-kind {
+	display: inline-block; padding: 0 0.55em; border-radius: 1em; font-size: 0.84em; font-weight: 700; white-space: nowrap; line-height: 1.6;
+	color: #fff; background: #6b6b66;
+}
+.adr-status--proposed { background: #1e6fd0; }
+.adr-status--accepted, .vr-result--pass, .arc-status--stable { background: #23794a; }
+.adr-status--rejected, .vr-result--fail { background: #b83232; }
+.adr-status--deprecated { background: #6d4c41; }
+.adr-status--superseded { background: #6b6b66; text-decoration: line-through; }
+.vr-result--partial, .arc-status--partial { background: #a35f00; }
+.arc-status--empty { background: #8a8a84; }
+.arc-status--na { background: #c9c9c2; color: #222; }
+.exp-status--planned { background: #3949ab; }
+.exp-status--running { background: #a35f00; }
+.exp-status--done { background: #23794a; }
+.exp-status--stopped { background: #6b6b66; }
+.pub-kind--overview { background: #1565c0; }
+.pub-kind--report { background: #6d4c41; }
+.pub-kind--release { background: #00695c; }
+.pub-kind--note { background: #6a1b9a; }
+.pub-kind--slides { background: #ad1457; }
+
+/* C4 viewer embeds (<!-- c4-app -->, <!-- c4-view: id -->) */
+.c4-launch { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 1.2em 0 0.8em; }
+.c4-launch span { color: var(--kit-muted); font-size: 14px; }
+.kit-content a.kit-button {
+	display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 10px; font-weight: 650; text-decoration: none;
+	color: var(--kit-accent-strong); background: color-mix(in srgb, var(--kit-accent) 12%, transparent); border: 1px solid color-mix(in srgb, var(--kit-accent) 50%, transparent);
+}
+.kit-content a.kit-button:hover { background: color-mix(in srgb, var(--kit-accent) 20%, transparent); border-color: var(--kit-accent); }
+.c4-embed { display: block; width: 100%; height: 640px; border: 1px solid var(--kit-border); border-radius: var(--kit-radius); background: var(--kit-bg); }
+@media (max-width: 600px) { .c4-embed { height: 480px; } }
+.c4-inline { margin: 1.2em 0; }
+.c4-inline__bar { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; color: var(--kit-muted); margin-bottom: 6px; }
 
 /* ---- edit link, previous / next, back to top --------------------------------------- */
 .kit-edit { margin: 48px 0 0; font-size: 14px; }

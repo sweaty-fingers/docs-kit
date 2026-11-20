@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.0 — 2026-11-20
+
+- Record tabs in the Astro edition (prd.md M4, `site/src/lib/records.ts`, port of hooks/adr.py, records.py, experiments.py, arc42.py, publications.py): front matter and numbering checks as `WARNING` lines, `adr-index`, `adr-log`, `c4-app`, `c4-elements`, `c4-view: <id>` on any page, `vr-index`, `exp-index`, `arc42-index`, `pub-index`, the card under each record's title (VR / EXP rows on ADR cards, superseded VRs, publication sources and snapshot note), C4 model checks and the viewer data `adr/viewer/data.json` (views, elements, ADR summaries, VRs per element and ADR). The C4 viewer page itself is unchanged; it now follows the docs page theme when embedded, uses elkjs 0.12.1 from npm and the Pretendard font. Markers of a record tab that is off say so instead of a placeholder. Table cells no longer shrink a column to one character. selftest: fixtures for ADR-0002, VR-0001 (with repro files), EXP-0001, P-0001 and a `c4-view` embed; checks for indexes, back links, viewer data, and warnings of a broken ADR
+
 ## 0.16.0 — 2026-11-20
 
 - **The Astro edition becomes `main`** (the MkDocs edition stays at tag `v0.15.4`). External requests are allowed (prd.md §0): Mermaid 12.3.0 from npm as an ES module (only the chunks of the diagram types on a page) with colours from the site theme; Pretendard (text) and JetBrains Mono (code) fonts, both OFL; `rerun.viewer: hosted` opens recordings in the hosted Rerun viewer (app.rerun.io) from the site itself (public deploys such as GitHub Pages); `site.repo_url` (header link) and `site.edit_url` ("이 페이지 고치기"); 404 page, link-preview / canonical tags, `sitemap.xml` when `site.url` is set. selftest drops the offline check. Submodules: `git submodule add -b main`; projects on `branch = astro` switch `.gitmodules` to `main`

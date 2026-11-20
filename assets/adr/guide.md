@@ -28,7 +28,7 @@ ADR(Architecture Decision Record)은 **결정 하나**를 **왜 그렇게 정했
 | 번호: 지금 가장 큰 번호 + 1. 한 번 쓴 번호는 **재사용하지 않음** (기각·폐기된 ADR도 남김) | |
 | 첫 제목: `# ADR-NNNN. <결정 문장>` (파일 번호와 같아야 함) | `# ADR-0004. 외부 설정 파일을 저장소에 복사해 쓴다` |
 
-메뉴(`mkdocs.yml`의 `nav`), [목록](README.md), [의사결정 로그](log.md), [아키텍처 (C4)](c4.md)의 표시는 **자동으로** 갱신됩니다. 파일만 추가하면 됩니다.
+메뉴, [목록](README.md), [의사결정 로그](log.md), [아키텍처 (C4)](c4.md)의 표시는 **자동으로** 갱신됩니다. 파일만 추가하면 됩니다.
 
 ## 3. 머리말 (front matter)
 
@@ -115,13 +115,13 @@ stateDiagram-v2
 
 | 파일 | 역할 |
 | --- | --- |
-| docs-kit `hooks/adr.py` | 메뉴 자동 구성, 목록 표(`README.md`의 `<!-- adr-index -->`), 의사결정 로그(`log.md`의 `<!-- adr-log -->`), C4 그림·요소 표(`c4.md`의 `<!-- c4-view: <id> -->`, `<!-- c4-elements -->`), 상태 카드 삽입, 머리말·모델 검사 |
+| docs-kit `site/src/lib/records.ts`, `nav.ts` | 메뉴 자동 구성, 목록 표(`README.md`의 `<!-- adr-index -->`), 의사결정 로그(`log.md`의 `<!-- adr-log -->`), C4 그림·요소 표(`c4.md`의 `<!-- c4-view: <id> -->`, `<!-- c4-elements -->`), 상태 카드 삽입, 머리말·모델 검사 |
 | `docs/adr/c4-model.yml` | C4 요소·관계·그림 정의 (§9) |
-| docs-kit `assets/_kit/stylesheets/adr.css` | 상태 카드, 상태 배지, C4 뷰어 모양(밝은/어두운 색) |
-| docs-kit `assets/adr/viewer/` | 아키텍처 뷰어(별도 전체 화면 페이지): `index.html`, `viewer.css`, `viewer.js`. 배치는 저장소에 넣은 ELK(`viewer/vendor/`, 외부 인터넷 불필요), 선은 직각 경로로 카드를 피해 감. 데이터 `viewer/data.json`은 빌드할 때 훅이 만듦(저장소에 없음) |
-| 프로젝트 `mkdocs.yml` | `nav`의 `ADR` 항목(없으면 훅이 끝에 추가하고, 내용은 훅이 채움). 훅·CSS 설정은 docs-kit `mkdocs.base.yml`에서 상속 |
+| docs-kit `site/public/_kit/kit.css` | 상태 카드, 상태 배지, C4 뷰어 삽입 모양(밝은/어두운 색) |
+| docs-kit `assets/adr/viewer/` | 아키텍처 뷰어(별도 전체 화면 페이지): `index.html`, `viewer.css`, `viewer.js`. 배치는 ELK(`elkjs`, 버전은 사이트 잠금 파일), 선은 직각 경로로 카드를 피해 감. 데이터 `viewer/data.json`은 빌드할 때 만들어짐(저장소에 없음) |
+| 프로젝트 `docs-kit.yml` | ADR 탭 켜기(`features`), 분야 목록(`areas`). 메뉴를 직접 정할 때 `nav`의 `ADR` 항목은 비워 두면 키트가 채움 |
 
-훅 코드를 고친 뒤에는 서버를 다시 시작해야 반영됩니다(`.docs-kit/bin/docs.sh stop && .docs-kit/bin/docs.sh start`). ADR 파일을 추가·수정하는 것은 재시작 없이 바로 반영됩니다.
+키트의 `site/` 코드를 고친 뒤에는 서버를 다시 시작해야 반영됩니다(`.docs-kit/bin/docs.sh stop && .docs-kit/bin/docs.sh start`). ADR 파일을 추가·수정하는 것은 재시작 없이 바로 반영됩니다.
 
 ## 9. 아키텍처 (C4) 모델 관리
 

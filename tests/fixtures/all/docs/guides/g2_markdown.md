@@ -81,3 +81,7 @@ flowchart LR
 </div>
 
 <!-- short-links -->
+
+## 5. C4 그림 넣기
+
+<!-- c4-view: context height=360 -->

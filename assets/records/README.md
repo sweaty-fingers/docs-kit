@@ -18,4 +18,4 @@
 | 재현 | `assets/VR-NNNN/repro.sh`(다시 실행)와 `expected.txt`(이 기록의 값). 없으면 빌드 로그에 경고 |
 | 고치기 | 쓴 뒤 고치지 않음. 다시 검증하면 새 VR에 `supersedes: <번호>`. 옛 VR에는 "대신하는 새 기록"이 자동 표시 |
 
-웹에서는 각 VR 제목 아래 결과 카드가 붙고, `adr:`에 적은 ADR의 카드와 아키텍처 뷰어에 이 VR이 "검증 기록"으로 표시됩니다(docs-kit `hooks/records.py`).
+웹에서는 각 VR 제목 아래 결과 카드가 붙고, `adr:`에 적은 ADR의 카드와 아키텍처 뷰어에 이 VR이 "검증 기록"으로 표시됩니다(docs-kit `site/src/lib/records.ts`).

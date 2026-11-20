@@ -105,6 +105,31 @@ PY
 )"
 [[ -z "$md" ]] || fail "markdown (guides/g2_markdown.html) not as expected: $md"
 grep -q 'location.replace' "$S/r/home/index.html" || fail "short address r/home/ is not a redirect page"
+# record tabs (M4): indexes, cards with back links, the C4 viewer data
+rec="$(python3 - "$S" <<'PY'
+import json, re, sys
+S = sys.argv[1]
+def art(p):
+    h = open(f"{S}/{p}", encoding="utf-8").read()
+    return h[h.find("<article"):h.find("</article>")]
+d = json.load(open(f"{S}/adr/viewer/data.json", encoding="utf-8"))
+adr2 = art("adr/0002-build-the-site-with-astro.html")
+checks = {
+    "adr index": "ADR-0002" in art("adr/index.html") and "adr-status--accepted" in art("adr/index.html"),
+    "adr log": "docs-kit Astro" in art("adr/log.html"),
+    "adr card back links": "0001-site-builds.html" in adr2 and "0001-search-quality.html" in adr2,
+    "vr index": "VR-0001" in art("records/index.html"),
+    "exp index": "EXP-0001" in art("experiments/list.html"),
+    "arc42 index": len(re.findall(r'href="a\d\d_', art("arc42/index.html"))) == 12,
+    "publication card": "a01_goals.html" in art("publications/0001-overview.html"),
+    "c4 data": [v["id"] for v in d["views"]] == ["context", "system"] and d["elements"]["app"].get("records") == ["0001"]
+               and d["adrs"]["0002"].get("records") == ["0001"],
+    "c4 view embed": "viewer/index.html?embed=1#view=context" in art("guides/g2_markdown.html"),
+}
+print(" ".join(k for k, v in checks.items() if not v))
+PY
+)"
+[[ -z "$rec" ]] || fail "record tabs not as expected: $rec"
 # ---- 4. ask (bin/docs_ask.py): the per-sentence citation check (host Python, no model needed)
 ask="$(python3 - "$KIT/bin" <<'PY'
 import sys; sys.path.insert(0, sys.argv[1]); import docs_ask as a
@@ -145,6 +170,11 @@ grep -q '^site:' "$M/docs-kit.yml" && grep -q 'name: "옛 프로젝트"' "$M/doc
 before="$(cat "$M/docs-kit.yml")"; DOCS_ROOT="$M" python3 "$KIT/bin/kit.py" migrate >/dev/null
 [[ "$before" == "$(cat "$M/docs-kit.yml")" ]] || fail "migrate: a second run changed docs-kit.yml"
 log="$(build "$M")"; w="$(warnings "$log" migrated)"; [[ -z "$w" ]] || fail "$w"
+# record checks: a broken ADR (no front matter, wrong title number) gives its warnings
+printf '# ADR-0005. 번호가 다른 결정\n' > "$M/docs/adr/0003-broken.md"
+log="$(build "$M")"
+grep -q "WARNING adr: adr/0003-broken.md: front matter 'status' is missing" <<<"$log" && grep -q "title number ADR-0005 does not match" <<<"$log" \
+  || fail "adr checks: no warning for a broken ADR"
 
 if [[ -n "$bad" ]]; then
   echo "$bad"; echo "selftest FAILED"; exit 1

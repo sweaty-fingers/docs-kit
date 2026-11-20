@@ -6,11 +6,13 @@
   <title>아키텍처</title>
   <!-- Standalone C4 viewer. Data: data.json (written by docs-kit hooks/adr.py
        from docs/adr/c4-model.yml and the ADR front matter). Guide: adr/guide.md §9 -->
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="../../_kit/vendor/pretendard/pretendardvariable-dynamic-subset.css">
   <link rel="stylesheet" href="viewer.css">
   <script>
     // Theme before first paint: saved choice, else the system setting.
-    // Embedded in a docs page (?embed=1): follow that page's Material scheme
-    // instead, and keep following it when the reader toggles the page theme.
+    // Embedded in a docs page (?embed=1): follow that page's theme (docs-kit site: data-theme on <html>, else the
+    // system setting) and keep following it when the reader toggles the page theme.
     (function () {
       var root = document.documentElement, t = null;
       try { t = localStorage.getItem("docs-kit-c4-theme"); } catch (e) {}
@@ -18,15 +20,17 @@
       root.setAttribute("data-theme", t);
       if (!/[?&]embed=1/.test(location.search)) return;
       root.classList.add("embed");
-      var body = null;
-      try { if (window.parent !== window) body = window.parent.document.body; } catch (e) {}  // other origin: keep t
-      if (!body) return;
+      var page = null;
+      try { if (window.parent !== window) page = window.parent.document.documentElement; } catch (e) {}  // other origin: keep t
+      if (!page) return;
       function sync() {
-        var s = body.getAttribute("data-md-color-scheme");
-        if (s) root.setAttribute("data-theme", s === "slate" ? "dark" : "light");
+        var s = page.getAttribute("data-theme");
+        if (!s) s = window.parent.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        root.setAttribute("data-theme", s);
       }
       sync();
-      new MutationObserver(sync).observe(body, { attributes: true, attributeFilter: ["data-md-color-scheme"] });
+      new MutationObserver(sync).observe(page, { attributes: true, attributeFilter: ["data-theme"] });
+      window.parent.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", sync);
     })();
   </script>
 </head>

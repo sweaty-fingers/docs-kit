@@ -1,7 +1,7 @@
 /* Standalone C4 viewer (docs/adr/viewer/). Dark and light themes share the
    tokens below; viewer.js reads none of them, everything is styled here. */
 :root {
-  --font: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic",
+  --font: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic",
     "Noto Sans KR", "Segoe UI", Roboto, sans-serif;
   --mono: "JetBrains Mono", "D2Coding", "SFMono-Regular", Menlo, Consolas, monospace;
   --radius: 12px;

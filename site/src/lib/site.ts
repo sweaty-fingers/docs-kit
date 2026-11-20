@@ -11,6 +11,7 @@ import { renderMarkdown, type Heading } from '../markdown/pipeline.ts';
 import { markerHandlers } from './markers.ts';
 import { warn } from './warnings.ts';
 import { finishLinks } from './links.ts';
+import { isRecordPage, recordCard } from './records.ts';
 
 export interface SourceFile {
 	rel: string; // path under docs/ (or the kit's assets/), "/" separated
@@ -117,7 +118,7 @@ async function renderPage(p: ReturnType<typeof scanPages>[number], files: Map<st
 	const text = fs.readFileSync(p.abs, 'utf-8').replace(/\r\n/g, '\n');
 	// Pages that pull in other files (snippets) or show generated tables (markers) depend on more than their own
 	// file: render them every time.
-	const dynamic = text.includes('--8<--') || /^[ \t]*<!--\s*[a-z][a-z0-9-]*(:[^>]*)?-->[ \t]*$/m.test(text);
+	const dynamic = text.includes('--8<--') || /^[ \t]*<!--\s*[a-z][a-z0-9-]*(:[^>]*)?-->[ \t]*$/m.test(text) || isRecordPage(p.rel);
 	const [yamlText, bodyText] = splitFrontMatter(text);
 	let front: Record<string, any> = {};
 	if (yamlText !== null) {
@@ -138,6 +139,16 @@ async function renderPage(p: ReturnType<typeof scanPages>[number], files: Map<st
 	if (!hasH1 && front.title) md = `# ${front.title}\n\n${md}`;
 	md = snippets(md, readSnippetFactory(files), (what) => warn('snippets', p.rel, what));
 	md = markers(md, markerHandlers({ page: p, cfg }));
+	// record pages (ADR, VR, EXP, arc42, P): the card under the title (hooks/<tab>.py)
+	const cardHtml = recordCard(cfg, p);
+	if (cardHtml) {
+		let done = false;
+		md = eachLine(md, (line, inFence) => {
+			if (done || inFence || !/^# \S/.test(line)) return line;
+			done = true;
+			return [line, '', cardHtml, ''];
+		});
+	}
 	md = fixLists(md);
 	md = mdInHtml(md);
 	md = blocks(md);
