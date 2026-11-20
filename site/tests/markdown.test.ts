@@ -97,3 +97,8 @@ test('urls: page paths, README → index, relative links', () => {
 	assert.equal(relUrl('index.html', 'adr/index.html'), 'adr/index.html');
 	assert.equal(relUrl('a/b/c.html', 'a/d.html'), '../d.html');
 });
+
+test('heading ids: GitHub-style slugs, repeats get _1 / _2 like the MkDocs edition (MIG-2)', async () => {
+	const r = await renderMarkdown('## 개념\n\n## 장점\n\n## 개념\n\n## 개념\n\n## A B. c\n');
+	assert.deepEqual(r.headings.map((x) => x.id), ['개념', '장점', '개념_1', '개념_2', 'a-b-c']);
+});

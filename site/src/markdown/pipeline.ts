@@ -9,7 +9,7 @@ import remarkRehype from 'remark-rehype';
 import rehypeRaw from 'rehype-raw';
 import rehypeKatex from 'rehype-katex';
 import rehypeStringify from 'rehype-stringify';
-import GithubSlugger from 'github-slugger';
+import { slug as githubSlug } from 'github-slugger';
 import { visit, SKIP } from 'unist-util-visit';
 import { toString } from 'hast-util-to-string';
 import type { Element, Root, Text, ElementContent } from 'hast';
@@ -155,11 +155,22 @@ async function ensureLangs(md: string) {
 // ------------------------------------------------------------ headings: GitHub-style ids + ¶ (FR-UI-3/4)
 function rehypeHeadings(out: Heading[]) {
 	return () => (tree: Root) => {
-		const slugger = new GithubSlugger();
+		// a repeated heading gets "_1", "_2" (Python-Markdown toc, the MkDocs edition), so links keep working (MIG-2)
+		const used = new Set<string>();
+		const unique = (id: string) => {
+			while (used.has(id)) {
+				const m = /^(.*)_(\d+)$/.exec(id);
+				id = m ? `${m[1]}_${Number(m[2]) + 1}` : `${id}_1`;
+			}
+			used.add(id);
+			return id;
+		};
 		visit(tree, 'element', (node: Element) => {
 			if (!/^h[1-6]$/.test(node.tagName)) return;
 			const text = toString(node).trim();
-			const id = (node.properties.id as string) || slugger.slug(text);
+			const own = node.properties.id as string | undefined;
+			if (own) used.add(own);
+			const id = own || unique(githubSlug(text));
 			node.properties.id = id;
 			out.push({ depth: Number(node.tagName[1]), text, id });
 			if (node.tagName !== 'h1')

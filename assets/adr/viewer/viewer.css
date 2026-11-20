@@ -27,6 +27,7 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
+html { overflow: hidden; }   /* the closed drawer waits off the right edge: no sideways scroll to it */
 body {
   font-family: var(--font); color: var(--text); background: var(--bg);
   font-size: 14px; line-height: 1.5; display: flex; flex-direction: column; overflow: hidden;

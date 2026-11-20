@@ -119,6 +119,19 @@ export default function kit(): AstroIntegration {
 					fs.mkdirSync(path.dirname(to), { recursive: true });
 					fs.copyFileSync(abs, to);
 				}
+				// 2b. viewer data of tabs that are off (or have no data file): the endpoints always run, the MkDocs edition
+				//     wrote these only for tabs that are on
+				{
+					const c = loadConfig();
+					const has = (rel: string) => fs.existsSync(path.join(DOCS_DIR, rel));
+					const keep: Record<string, boolean> = {
+						'adr/viewer/data.json': enabled(c, 'adr'),
+						'roadmap/viewer/data.js': enabled(c, 'roadmap') && has('roadmap/roadmap.yml'),
+						'plan/board/data.js': enabled(c, 'plan') && has('plan/scope.yml'),
+						'graph/viewer/data.js': enabled(c, 'graph'),
+					};
+					for (const [rel, on] of Object.entries(keep)) if (!on) fs.rmSync(path.join(out, rel), { force: true });
+				}
 				// 3. sitemap.xml for public sites (docs-kit.yml site.url): every page except templates
 				const kcfg = loadConfig();
 				if (kcfg.site.url) {

@@ -1,0 +1,8 @@
+# Accepted differences between the MkDocs edition (v0.15.4) and the Astro edition (bin/site_diff.py --allow).
+# One prefix per line; a reported difference that starts with a line here is accepted. Reviewed 2026-11-21.
+
+# The 404 page has its own layout (no article heading); nothing links to it.
+title 404.html:
+# The dashboard's burn-up tabs (<h3 class="pl-tab-h">) get ids in the Astro edition; extra anchors break nothing.
+anchor-new plan/index.html #과제-전체
+anchor-new plan/index.html #지금-하는-일

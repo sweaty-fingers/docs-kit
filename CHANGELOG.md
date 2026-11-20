@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.20.0 — 2026-11-21
+
+M7 of the Astro edition: migration and verification (results in site/README.md "M7 verification").
+
+- `bin/site_diff.py` (MIG-4): compares two built sites page by page — page list, title, section anchors, link targets;
+  `--allow` for accepted differences, `--json`
+- `bin/compare_editions.sh [project]`: builds the same docs with the MkDocs edition (tag v0.15.4, MkDocs Material
+  9.5.49 in a throwaway venv) and with this kit after `kit.py migrate`, then compares (`tests/site-diff-allow.txt`)
+- Repeated headings get `_1`, `_2` like Python-Markdown (they were `-1`), so anchors of the MkDocs edition keep working
+- Viewer data files of tabs that are off are no longer published (`adr/viewer/data.json`, `roadmap/viewer/data.js`,
+  `plan/board/data.js`, `graph/viewer/data.js`)
+- Phones: the sprint board's top bar wraps; the C4 viewer's closed drawer no longer widens the page
+
 ## 0.19.0 — 2026-11-21
 
 M6 of the Astro edition: the document map and the grounding page. Every tab of the MkDocs edition now builds.
