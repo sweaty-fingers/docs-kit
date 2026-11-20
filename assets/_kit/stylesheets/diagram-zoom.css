@@ -1,0 +1,18 @@
+/* Mermaid zoom frame (javascripts/diagram-zoom.js) */
+.dk-diagram { margin: 1em 0; border: 1px solid var(--md-default-fg-color--lightest); border-radius: 6px;
+  background: var(--md-default-bg-color); }
+.dk-diagram__bar { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; padding: 4px 6px;
+  border-bottom: 1px solid var(--md-default-fg-color--lightest); font-size: .68rem; }
+.dk-diagram__bar button { font: inherit; min-width: 1.9em; padding: 1px 7px; cursor: pointer; border-radius: 4px;
+  color: var(--md-default-fg-color--light); background: transparent; border: 1px solid var(--md-default-fg-color--lighter); }
+.dk-diagram__bar button:hover { color: var(--md-accent-fg-color); border-color: var(--md-accent-fg-color); }
+.dk-diagram__pct { min-width: 3.2em; text-align: center; color: var(--md-default-fg-color--light);
+  font-variant-numeric: tabular-nums; }
+.dk-diagram__hint { margin-left: auto; color: var(--md-default-fg-color--lighter); }
+.dk-diagram__view { overflow: auto; max-height: 80vh; cursor: grab; touch-action: pan-x pan-y; }
+.dk-diagram__view.is-dragging { cursor: grabbing; user-select: none; }
+.dk-diagram__sizer { position: relative; }
+.dk-diagram__sizer > div.mermaid { margin: 0; }
+.dk-diagram:fullscreen { display: flex; flex-direction: column; border: 0; border-radius: 0; }
+.dk-diagram:fullscreen .dk-diagram__view { flex: 1; max-height: none; }
+@media (max-width: 600px) { .dk-diagram__hint { display: none; } }

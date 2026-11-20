@@ -1,0 +1,6 @@
+{
+  "about": "검색 평가 질문 세트: 질문마다 답이 있는 문서(정답). bin/docs_check.py가 hit@1, recall@5, MRR을 잼. 답을 직접 확인한 질문만 넣음. 에이전트가 문서를 못 찾거나 틀린 문서를 인용하면 그 질문을 더함",
+  "questions": [
+    {"q": "결정을 어떤 형식으로 기록하나", "expect": ["docs/adr/0001-record-architecture-decisions.md"]}
+  ]
+}

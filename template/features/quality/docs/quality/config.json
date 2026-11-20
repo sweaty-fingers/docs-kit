@@ -1,0 +1,8 @@
+{
+  "about": "근거 점검 설정 (docs-kit bin/docs_check.py). 기본값은 DEFAULT_CFG. 다른 저장소·장비의 경로는 path_external, 아직 없는 계획 경로는 path_planned에",
+  "path_external": [],
+  "path_planned": [],
+  "path_ignore": ["build/*"],
+  "ident_ignore": [],
+  "ask": {"port": 8003, "from_ports": [8001], "start": ".docs-kit/bin/serve.sh ask start"}
+}

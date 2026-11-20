@@ -1,0 +1,41 @@
+# {{PROJECT}} 로드맵: 한 일과 할 일. 그림, 업무별 흐름, 표, 항목 페이지가 모두 이 파일에서 만들어집니다
+# (docs-kit hooks/roadmap.py, 편집 안내: 메뉴 로드맵 › 편집 안내). 계획이 바뀌면 이 파일만 고칩니다.
+# 아래 트랙·업무·항목은 예시입니다. 프로젝트에 맞게 바꿉니다.
+title: "{{PROJECT}} 로드맵"
+
+tracks:                      # 세로 레인, 위에서 아래. 합류하는 트랙은 이웃하게. id는 문서 지도의 주제(topics)로도 쓰임
+  - {id: env, name: 환경·문서, color: "#7a7a73"}
+  - {id: core, name: 핵심 기능, color: "#2f7ed8"}
+  - {id: ui, name: 화면, color: "#e07a1f"}
+
+units:                       # 업무: 이슈 트래커 마일스톤과 같은 이름으로 (주간 보고 업무 이름과도 같게)
+  - {id: setup, name: 개발 환경·문서, summary: 저장소, 개발 환경, 문서 사이트}
+  - {id: mvp, name: 첫 버전, summary: 핵심 흐름이 처음부터 끝까지 돈다}
+
+items:
+  - id: docs-site
+    title: 문서 사이트와 결정 기록
+    track: env
+    unit: setup
+    status: done                # done | doing | next | later | future | dropped
+    date: {{TODAY}}             # done·dropped일 때 끝난 날
+    refs: [ADR-0001]
+    summary: docs-kit으로 문서 사이트를 세우고 첫 ADR을 씀
+  - id: core-flow
+    title: 핵심 흐름 구현
+    track: core
+    unit: mvp
+    status: next
+    after: [docs-site]
+  - id: first-screen
+    title: 첫 화면
+    track: ui
+    unit: mvp
+    status: later
+    after: [core-flow]
+  - id: release-1
+    title: 첫 버전 공개
+    track: [core, ui]           # 이웃한 두 트랙을 합친 일 = 합류
+    unit: mvp
+    status: future
+    after: [core-flow, first-screen]

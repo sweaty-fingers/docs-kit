@@ -2,7 +2,7 @@
 
 이 문서는 docs-kit **전체를 다른 세션·다른 환경에서 그대로 다시 만들거나 이어서 고칠 수 있도록** 구조, 동작, 형식, 도구, 시험, 에이전트 운영을 한곳에 적은 명세입니다. 에이전트가 처음 읽는 문서로 씁니다.
 
-> 기준: docs-kit 0.15.3, 2026-11-20. 키트 동작을 바꾸면 이 문서의 해당 절도 같은 커밋에서 고칩니다(AGENTS-GUIDE §7).
+> 기준: docs-kit 0.15.4, 2026-11-20. 키트 동작을 바꾸면 이 문서의 해당 절도 같은 커밋에서 고칩니다(AGENTS-GUIDE §7).
 
 - **저장소가 있으면 저장소가 정본**입니다. 이 문서와 코드가 다르면 코드를 믿고 이 문서를 고칩니다.
 - **저장소를 가져갈 수 있으면** 복제가 가장 확실합니다(`git clone`, 또는 `git bundle create docs-kit.bundle --all`로 파일 하나로 옮김). 이 명세는 가져갈 수 없을 때 다시 만드는 기준이고, 순서는 §12입니다.
@@ -79,6 +79,7 @@ docs-kit/
     base/{mkdocs.yml,docs-kit.yml,docs/README.md}
     features/<id>/<프로젝트 경로>  # adr, roadmap, plan, quality, history, guides, reference, shared, background, glossary, models
     agents/AGENTS.docs-kit.md
+  tests/fixtures/all/             # selftest 고정 입력 (docs/ 아래 그대로, README.append.md)
   bin/
     kit.py init.sh docs.sh selftest.sh
     docs_search.py docs_check.py docs_ask.py serve.sh plan_board.py repro.sh weekly_draft.py
@@ -362,7 +363,7 @@ arc42 섹션 파일 이름: a01_goals, a02_constraints, a03_context, a04_solutio
 
 `template/`로 임시 프로젝트 둘을 만들어 Docker로 빌드하고 하나라도 어긋나면 실패합니다.
 
-1. `all` 프로젝트(+ 주간 보고 2개, 두 트랙이 합류하는 로드맵, Epic·WBS·질문이 있는 scope, 스프린트, 리스크, 없는 `ADR-0999`를 인용한 페이지, 검색 질문 1개, 2칸 하위 목록): `WARNING`/`ERROR` 0, 주요 산출물(index, docs-kit, adr 페이지·viewer·data.json·elk, r/home, weekly·threads, roadmap 페이지·항목·viewer data.js, graph viewer data.js, plan·sprints·board data.js, quality, vendor 스크립트) 존재, 업무별 흐름에 두 보고, 노선도 합류와 묶인 refs, 지도에 ADR 노드와 주제, PI 매트릭스 칸 20에 R01, 보드 카드 W1과 속도 그림, 근거 점검이 ADR-0999를 틀림으로, 2칸 목록이 중첩 목록으로, 외부 `src="http..."` 스크립트 없음, `docs_ask.check()`의 판정 순서 `supported unverified unsupported unsupported none`.
+1. `all` 프로젝트 + 고정 입력 `tests/fixtures/all/`(`docs/`에 그대로 복사, `README.append.md`는 README 끝에 덧붙임: 주간 보고 2개, 두 트랙이 합류하는 로드맵, Epic·WBS·질문이 있는 scope, 스프린트, 리스크, 없는 `ADR-0999`를 인용한 페이지, 검색 질문 1개, 2칸 하위 목록): `WARNING`/`ERROR` 0, 주요 산출물(index, docs-kit, adr 페이지·viewer·data.json·elk, r/home, weekly·threads, roadmap 페이지·항목·viewer data.js, graph viewer data.js, plan·sprints·board data.js, quality, vendor 스크립트) 존재, 업무별 흐름에 두 보고, 노선도 합류와 묶인 refs, 지도에 ADR 노드와 주제, PI 매트릭스 칸 20에 R01, 보드 카드 W1과 속도 그림, 근거 점검이 ADR-0999를 틀림으로, 2칸 목록이 중첩 목록으로, 외부 `src="http..."` 스크립트 없음, `docs_ask.check()`의 판정 순서 `supported unverified unsupported unsupported none`.
 2. `minimal` 프로젝트: 경고 0, 탭에 ADR이 있고 현황판·문서 지도가 없음 → `kit.py enable plan roadmap weekly` + `disable glossary` → 시작 파일 복사됨, 경고 0, 탭 순서 현황판 → 주간 보고 → 로드맵 → ADR, 용어집 없음.
 
 끝에 `selftest OK (<N> pages)`.

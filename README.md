@@ -152,6 +152,7 @@ git add .docs-kit && git commit -m "docs-kit <버전>"
 | `assets/` | 사이트에 들어가는 키트 페이지·뷰어·스타일 (`assets/<탭>/`, `_kit/`, `docs-standard.md`, `docs-kit.md`) |
 | `template/base/`, `template/features/<id>/` | `kit.py init`·`enable`이 복사하는 시작 파일 |
 | `template/agents/AGENTS.docs-kit.md` | 프로젝트 AGENTS.md에 넣을 절 |
+| `tests/fixtures/all/` | selftest 고정 입력(주간 보고, 로드맵, 현황판, 리스크, 스프린트, 검색 질문, 주제) |
 | `bin/` | `kit.py`(설정), `docs.sh`(사이트), `docs_search.py`·`docs_check.py`·`docs_ask.py`(근거), `serve.sh`(보드·질문 서버), `plan_board.py`, `repro.sh`(VR 재현), `weekly_draft.py`(주간 보고 재료), `init.sh`, `selftest.sh` |
 
 ## 5. docs-kit 고치기

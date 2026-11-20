@@ -1,0 +1,17 @@
+# Docs site for this project. Theme, Markdown extensions, hooks and styles come
+# from docs-kit (.docs-kit/mkdocs.base.yml); set the site name and menu here.
+# Which tabs are on: docs-kit.yml (.docs-kit/bin/kit.py status). Tabs that are on
+# are added to the menu by the kit in the standard order; list a tab here only to
+# place it differently or to group its pages yourself.
+# Run: .docs-kit/bin/docs.sh start
+INHERIT: .docs-kit/mkdocs.base.yml
+site_name: "{{PROJECT}}"
+
+extra:
+  # issues_url: https://gitlab.example.com/group/project/-/issues/   # #12, !27 links in reports, roadmap, dashboard
+  links:                         # short addresses /r/<name>/ (hooks/links.py)
+    short:
+      - {name: home, to: README.md, title: 첫 페이지}
+
+nav:
+  - 개요: README.md

@@ -1,0 +1,15 @@
+# docs-kit 프로젝트 설정: 켤 탭(메뉴)과 분야 목록입니다.
+#   보기:   .docs-kit/bin/kit.py status
+#   바꾸기: .docs-kit/bin/kit.py enable <id> | disable <id> | profile <묶음>   (켤 때 시작 파일을 복사)
+# 탭과 묶음의 설명은 사이트의 "문서 사이트 사용법" §7과 "문서 규격" §13에 있습니다.
+profile: {{PROFILE}}                 # minimal | app | dev | research | all
+features: {}                     # 묶음에서 바꿀 탭만 (예: weekly: false)
+areas:                           # ADR·VR·EXP 머리말 area 값 (id: 이름). 프로젝트에 맞게 고칩니다
+  arch: 구조·설계
+  dev-env: 개발 환경
+  platform: 플랫폼·연동
+  data: 데이터
+  quality: 품질·시험
+  safety: 안전·보안
+  ops: 배포·운영
+  docs: 문서

@@ -1,0 +1,6 @@
+{
+  "cadence_days": 7,
+  "wip_limit": 3,
+  "save": {"port": 8002, "from_ports": [8001], "start": ".docs-kit/bin/serve.sh board start"},
+  "sprints": []
+}

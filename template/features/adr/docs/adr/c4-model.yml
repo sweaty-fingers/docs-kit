@@ -1,0 +1,50 @@
+# C4 model of this project: elements, relations, and the views drawn from them
+# in the architecture viewer (adr/viewer/). ADRs point at elements with
+# `c4: [<id>, ...]`. How to edit: adr/guide.md §9.
+#
+# kind: person | system | container | component
+# external: true  -> owned by another team or outside; children inherit
+# parent: <id>    -> container inside a system, component inside a container
+# views: scope -> draw that element's children; include -> only these children
+#        direction: RIGHT (default) | DOWN -> main flow of the layout
+
+elements:
+  - id: team
+    name: 우리 팀
+    kind: person
+    description: 이 시스템을 만들고 운영함
+  - id: system
+    name: "{{PROJECT}}"
+    kind: system
+    description: 이 프로젝트가 만드는 시스템
+  - id: app
+    name: 애플리케이션
+    kind: container
+    parent: system
+    technology: "(기술 스택)"
+    description: "(역할 한 줄)"
+  - id: store
+    name: 데이터 저장소
+    kind: container
+    parent: system
+    technology: "(예: PostgreSQL)"
+    description: "(역할 한 줄)"
+  - id: upstream
+    name: 외부 시스템
+    kind: system
+    external: true
+    description: 우리가 쓰는 다른 팀·외부 시스템
+
+relations:
+  - {from: team, to: app, label: 개발·운영}
+  - {from: app, to: store, label: 읽기·쓰기}
+  - {from: app, to: upstream, label: 호출, tech: HTTPS}
+
+views:
+  - id: context
+    title: 시스템 컨텍스트 (Level 1)
+    description: 우리 시스템과 사람, 외부 시스템의 관계
+  - id: system
+    title: 컨테이너 (Level 2)
+    scope: system
+    description: 시스템 안의 실행 단위와 바깥과의 관계

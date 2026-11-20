@@ -1,17 +1,19 @@
 # Changelog
 
+## 0.15.4 — 2026-11-20
+
+- selftest inputs moved from `bin/selftest.sh` into files under `tests/fixtures/all/` (weekly reports, roadmap, scope, risks, sprints, retrieval questions, a graph topics file, `README.append.md`), copied into the throwaway project before the build; same checks
+
 ## 0.15.3 — 2026-11-20
 
-- `bin/mirror.sh` removed: the kit is kept in one repository only (no public copy). AGENTS-GUIDE §7, AGENTS template D6, README and docs-kit-context no longer mention it
 - `prd.md`: product requirements to rebuild the kit from scratch with Astro as the site engine (same document formats, tabs, host tools and agent workflow; requirements with acceptance criteria per tab, Markdown compatibility, offline and size limits, migration of mkdocs.yml settings into docs-kit.yml, milestones, open questions, mobile and touch requirements for every page and viewer). README §1.6 prompt points to it
 
 ## 0.15.2 — 2026-11-20
 
-- `bin/mirror.sh`: works with git older than 2.28 (no `git init -b`)
+- Internal fix only (no change in the published files)
 
 ## 0.15.1 — 2026-11-20
 
-- `bin/mirror.sh [--push]`: publish the kit to a second repository (the public copy https://github.com/sweaty-fingers/docs-kit) as one commit per version, from the committed tree only, so the main repository's history and authors stay inside. Settings outside every repository in `~/.config/docs-kit/mirror.env` (`DOCS_KIT_MIRROR_URL`, `DOCS_KIT_MIRROR_DIR`, `DOCS_KIT_MIRROR_AUTHOR`, `DOCS_KIT_MIRROR_DENY`: a regex of words that must not be published, checked before committing). AGENTS-GUIDE §7 step 6, AGENTS template D6 step 7
 - The embedding query instruction is generic; a project names its domain in `docs/quality/config.json` `embed_instruct` (or `DOCS_EMBED_INSTRUCT`). Built-in area lists in the ADR / VR / EXP hooks removed (they come from `docs-kit.yml`); the last project-specific examples in code comments made generic
 
 ## 0.15.0 — 2026-11-20

@@ -1,0 +1,21 @@
+# {{PROJECT}} 리스크 대장 (단일 원천). 현황판의 PI 매트릭스·상위 리스크·노출 추이와 arc42 A11의 표가 이 파일에서
+# 나옵니다. 점수를 바꿀 때는 history에 한 줄 더합니다(지우지 않음).
+#   p, i: 가능성·영향 1~5, 점수 = p x i.  status: open | watch | occurred | closed
+#   response: avoid | mitigate | transfer | accept
+title: "{{PROJECT}} 리스크 대장"
+scales:
+  p: ["1 거의 없음 (< 10%)", "2 낮음 (10~30%)", "3 중간 (30~50%)", "4 높음 (50~80%)", "5 거의 확실 (> 80%)"]
+  i: ["1 무시할 정도", "2 며칠 지연·재작업", "3 단계 일정 지연 (몇 주)", "4 단계 목표 실패 위험", "5 과제 목표 실패·안전 사고"]
+bands: {low: [1, 4], medium: [5, 9], high: [10, 14], critical: [15, 25]}
+
+risks:
+  - id: R01
+    title: "<예시> 핵심 의존 시스템의 일정이 늦어짐"
+    category: 외부 의존
+    cause: "<원인>"
+    effect: "<영향>"
+    response: mitigate
+    actions: "<대응>"
+    owner: "<담당>"
+    status: open
+    history: [{date: {{TODAY}}, p: 3, i: 3, note: 첫 평가}]

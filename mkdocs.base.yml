@@ -1,0 +1,105 @@
+# docs-kit base configuration. A project's mkdocs.yml starts with
+#   INHERIT: .docs-kit/mkdocs.base.yml
+# and sets site_name and nav. Paths below assume the kit is checked out at
+# .docs-kit/ in the project root (hook paths are relative to the project's
+# mkdocs.yml; _kit/ paths are site paths added by hooks/kit.py).
+docs_dir: docs
+site_dir: build/site
+use_directory_urls: false        # keep .md-relative links working as-is
+
+theme:
+  name: material
+  language: ko
+  font: false                    # system fonts (_kit/stylesheets/theme.css); no Google Fonts
+  icon:
+    logo: material/book-open-page-variant
+  features:
+    - navigation.tabs            # top-level sections as tabs under the header
+    - navigation.tabs.sticky
+    - navigation.sections        # sidebar groups with headings
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer          # previous / next at the bottom of each page
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle: {icon: material/weather-night, name: 어두운 테마}
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle: {icon: material/weather-sunny, name: 밝은 테마}
+
+hooks:
+  - .docs-kit/hooks/kit.py             # first: reads docs-kit.yml (tabs on / off, areas), adds kit pages/assets
+  - .docs-kit/hooks/lists.py           # nested lists at 2 spaces / lists right under text -> render as meant
+  - .docs-kit/hooks/section_links.py   # "§4.3" / "11 §4" -> links
+  - .docs-kit/hooks/adr.py             # ADR index/log/cards, C4 data
+  - .docs-kit/hooks/records.py         # VR index/nav/cards, VR links on ADR cards and in the C4 data (after adr.py)
+  - .docs-kit/hooks/experiments.py     # EXP list/nav/cards, EXP links on ADR cards (after adr.py)
+  - .docs-kit/hooks/arc42.py           # arc42 sections A1..A12: nav, status index, cards, checks
+  - .docs-kit/hooks/publications.py    # publications P-NNNN: nav, index, cards, checks
+  - .docs-kit/hooks/weekly.py          # weekly reports: nav, list, work threads, cards, checks
+  - .docs-kit/hooks/roadmap.py         # roadmap: transit map of done and planned work, item pages (roadmap.yml)
+  - .docs-kit/hooks/graph.py           # document map: documents and their links, relations, similar ones (graph/viewer)
+  - .docs-kit/hooks/plan.py            # project dashboard: scope baseline, scope vs progress, risks (plan/)
+  - .docs-kit/hooks/quality.py         # grounding page: checkable claims vs sources, retrieval evaluation (quality/)
+  - .docs-kit/hooks/rerun_embed.py     # <!-- rerun: path --> -> Rerun viewer box
+  - .docs-kit/hooks/links.py           # short addresses r/<name>/, rerun:/port: links, dev-only blocks
+  - .docs-kit/hooks/kit_nav.py         # last: tabs added by hooks go to their place in the standard order
+
+markdown_extensions:
+  - tables
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.snippets:             # --8<-- "arc42/a01_goals.md:rq" quotes a marked part of a canonical page
+      base_path: [docs]
+      check_paths: true
+  - pymdownx.arithmatex:
+      generic: true
+  - toc:
+      title: 이 페이지
+      permalink: true
+      # Unicode slugs so GitHub-style Korean anchors in links resolve.
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds: {case: lower}
+
+extra_css:
+  - _kit/stylesheets/theme.css
+  - _kit/stylesheets/adr.css
+  - _kit/stylesheets/diagram-zoom.css
+  - _kit/stylesheets/roadmap.css
+  - _kit/stylesheets/plan.css
+
+extra_javascript:                # all local (assets/_kit/vendor/README.txt): no CDN needed
+  - _kit/javascripts/mathjax.js           # MathJax config, must load before MathJax
+  - _kit/vendor/mathjax/tex-mml-chtml.js  # MathJax 3.2.2
+  - _kit/vendor/mermaid/mermaid.min.js    # Mermaid 11.4.1; Material then skips its unpkg fetch
+  - _kit/javascripts/rerun-embed.js       # Rerun recording boxes (hooks/rerun_embed.py)
+  - _kit/javascripts/links.js             # short addresses, rerun:/port: links, dev-only blocks (hooks/links.py)
+  - _kit/javascripts/diagram-zoom.js      # Mermaid diagrams: zoom / pan / full screen
+  - _kit/javascripts/plan.js              # dashboard: chart read-out, filters, sort, tooltips (hooks/plan.py)
+
+validation:
+  omitted_files: warn
+  unrecognized_links: info       # links to files outside docs/ stay as plain links
+  anchors: warn

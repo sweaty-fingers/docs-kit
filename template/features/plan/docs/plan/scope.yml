@@ -1,0 +1,30 @@
+# {{PROJECT}} 단계와 일의 분해 (Epic > Feature > Story > Backlog > WBS). 현황판의 작업량과 진척, 예측, 단계별 진행,
+# 연구 질문이 모두 이 파일에서 나옵니다 (docs-kit hooks/plan.py, 편집 안내: 메뉴 현황판 › 현황판 편집 안내).
+#   level: epic | feature | story | backlog | wbs     parent: 위 항목 id   (평평한 목록: 옮기려면 parent만 바꿈)
+#   size:  포인트(1 ≈ 이상적인 하루 작업). 숫자 하나 또는 폭 [최소, 최대]. 한 갈래에 한 번만
+#   상태:  roadmap: <로드맵 id> | issue: <번호> | status: todo | doing | done | dropped (+ date)
+#   dod:   완료 정의. Epic은 {text, met: yes | partial | no, evidence: [...]}
+#   added / removed (+ reason): 계획에 들어온 날 / 뺀 날. 값에 ", "나 " #"가 있으면 따옴표
+# 아래 항목은 예시입니다. 프로젝트에 맞게 바꿉니다.
+title: "{{PROJECT}} 계획"
+start: {{TODAY}}
+unit: 포인트
+unit_note: 1 포인트 ≈ 이상적인 하루 작업 (추정, 상대 크기)
+baselines:
+  - {id: B0, date: {{TODAY}}, note: 과제 시작}
+team_dod:
+  - 결과는 정본(VR·ADR·EXP·arc42)에 남기고, 보고·가이드는 링크함
+  - 문서 빌드 경고 0
+
+items:
+  - {id: E0, level: epic, short: 기반, title: "E0 기반 - 개발 환경과 문서", kind: enabler, wave: now,
+     dod: [{text: 문서 사이트와 결정 기록이 돈다, met: yes, evidence: [ADR-0001]}]}
+  - {id: W.docs, level: wbs, parent: E0, roadmap: docs-site, size: 1, dod: [문서 사이트 빌드 경고 0]}
+  - {id: M1, level: epic, short: 첫 버전, title: "M1 첫 버전 - 핵심 흐름", kind: deliver, wave: now,
+     dod: [{text: 핵심 흐름이 처음부터 끝까지 돈다, met: no}]}
+  - {id: F.core, level: feature, parent: M1, title: 핵심 흐름}
+  - {id: W.core, level: wbs, parent: F.core, roadmap: core-flow, size: [3, 5], dod: [시험 통과]}
+  - {id: W.screen, level: wbs, parent: F.core, roadmap: first-screen, size: [2, 4], wave: next, dod: [화면에서 흐름 확인]}
+
+questions:                     # 연구 질문 (없으면 지움): open | investigating | answered | dropped
+  - {id: RQ1, title: "<답을 찾을 질문>", status: open, confidence: low}
