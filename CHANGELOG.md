@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.19.0 — 2026-11-21
+
+M6 of the Astro edition: the document map and the grounding page. Every tab of the MkDocs edition now builds.
+
+- Document map (`graph`): nodes from every finished page (links read after all other passes, so § references count),
+  front-matter relations, suggested similar documents (TF-IDF text, shared targets, shared C4 elements, with reasons),
+  topics (front matter, `graph/topics.yml`, roadmap refs, neighbour guess) and the topic ring; `graph/viewer/data.js`
+  and the `graph-map` embed
+- Grounding (`quality`): runs `bin/docs_check.py --json` with the host Python (`DOCS_PYTHON`, default python3; standard
+  library only), cached in `build/quality/report.json` until a document, the code or the settings change; every
+  `quality-*` marker; the report is made only when a page has one of the markers
+- The `astro` branch is gone: the Astro edition has been on `main` since 0.16.0 (the MkDocs edition stays at tag v0.15.4)
+- selftest: graph topics / relation / short ids / embed, quality false claim and retrieval, sources not published
+
 ## 0.18.0 — 2026-11-20
 
 M5 of the Astro edition: the progress tabs.

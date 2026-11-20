@@ -72,7 +72,7 @@ S="$P/build/site"
 for f in index.html docs-kit.html docs-standard.html adr/index.html adr/log.html adr/c4.html adr/guide.html \
          adr/0001-record-architecture-decisions.html adr/viewer/index.html adr/viewer/vendor/elk.bundled.js r/home/index.html \
          experiments/list.html weekly/index.html weekly/threads.html weekly/2026-01-12.html roadmap/index.html roadmap/guide.html \
-         roadmap/items/ab.html roadmap/viewer/index.html roadmap/viewer/data.js plan/board/index.html plan/board/data.js \
+         roadmap/items/ab.html roadmap/viewer/index.html roadmap/viewer/data.js plan/board/index.html plan/board/data.js graph/viewer/index.html graph/viewer/data.js \
          graph/index.html plan/index.html plan/guide.html plan/sprints.html quality/index.html glossary/index.html guides/g2_markdown.html \
          _kit/kit.css _kit/kit.js _kit/vendor/mermaid/mermaid.esm.min.mjs _kit/vendor/katex/katex.min.css _kit/vendor/pretendard/pretendardvariable-dynamic-subset.css \
          _kit/vendor/jetbrains-mono/index.css _kit/pagefind/pagefind.js; do
@@ -158,6 +158,31 @@ print(" ".join(k for k, v in checks.items() if not v))
 PY
 )"
 [[ -z "$prog" ]] || fail "progress tabs not as expected: $prog"
+# map and grounding (M6): graph data with topics and relations, the embed; docs_check.py report on the quality page
+m6="$(python3 - "$S" <<'PY'
+import json, os, sys
+S = sys.argv[1]
+def art(p):
+    h = open(f"{S}/{p}", encoding="utf-8").read()
+    return h[h.find("<article"):h.find("</article>")]
+js = open(f"{S}/graph/viewer/data.js", encoding="utf-8").read()
+d = json.loads(js[len("window.DOCGRAPH = "):].rstrip().rstrip(";"))
+by = {n["id"]: n for n in d["nodes"]}
+adr = by.get("adr/0001-record-architecture-decisions.md", {})
+q = art("quality/index.html")
+checks = {
+    "graph topics": d["topics"][:1] == [["a", "갈래 A"]] and adr.get("topics") == ["a"] and adr.get("tsrc") == "확인",
+    "graph relation": any(r["label"] == "관련 결정" for r in adr.get("rel", [])),
+    "graph short ids": adr.get("short") == "ADR-0001" and not any(i.startswith(("roadmap/items/", "graph/")) for i in by),
+    "graph embed": "viewer/index.html?embed=1" in art("graph/index.html"),
+    "quality false claim": "ADR-0999" in q and "q-v-false" in q,
+    "quality retrieval": "검색 평가" in q and "BM25" in q,
+    "quality sources not published": not os.path.exists(f"{S}/quality/questions.json") and not os.path.exists(f"{S}/graph/topics.yml"),
+}
+print(" ".join(k for k, v in checks.items() if not v))
+PY
+)"
+[[ -z "$m6" ]] || fail "map / grounding tabs not as expected: $m6"
 # ---- 4. ask (bin/docs_ask.py): the per-sentence citation check (host Python, no model needed)
 ask="$(python3 - "$KIT/bin" <<'PY'
 import sys; sys.path.insert(0, sys.argv[1]); import docs_ask as a
