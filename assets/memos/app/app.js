@@ -1,7 +1,10 @@
 /* Work memo app (docs-kit memos tab). No dependencies.
- * Storage: the preview server's API ../../_kit/api/memos (site/src/lib/memos.ts): GET list, POST create, PUT <id> update
- * (with the version it was read at: 409 when the file changed elsewhere), DELETE <id> (only from the trash),
- * POST empty-trash. Without the API (the built site) the app is read-only and shows data.json when published.
+ * Storage, picked from data.json (written by the build, site/src/pages/memos/app/data.json.ts):
+ *   - GitHub (docs-kit.yml memos.github): memos are files in a repository, written from the browser with the reader's
+ *     own token (github-store.js), so the published site works from any device. The token stays in this browser.
+ *   - the preview server's API ../../_kit/api/memos (site/src/lib/memos.ts) when there is no GitHub storage.
+ * Both answer the same requests: GET list, POST create, PUT <id> update (with the version it was read at: 409 when
+ * the file changed elsewhere), DELETE <id> (only from the trash), POST empty-trash. Without either the app is read-only.
  * While a save is pending or failed, the text is kept in localStorage so nothing typed is lost. */
 (function () {
   "use strict";
@@ -10,9 +13,11 @@
   var S = {
     memos: [], works: [], dir: "docs/memos", writable: false, published: false,
     view: "all", query: "", from: "", to: "", sort: "updated",
-    cur: null, checked: new Set(), dirty: false, saving: false, timer: null, preview: false, fresh: null
+    cur: null, checked: new Set(), dirty: false, saving: false, timer: null, preview: false, fresh: null,
+    meta: {}, store: null, backend: "", gh: null, delay: 700
   };
   var DRAFT = "docs-kit-memo-draft:";
+  var TOKEN = "docs-kit-memo-github-token:";
 
   // ------------------------------------------------------------ helpers
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -40,8 +45,8 @@
     return { tags: tags, text: rest.replace(/[ \t]+\n/g, "\n").trim() };
   }
 
-  // ------------------------------------------------------------ API
-  function api(method, path, body) {
+  // ------------------------------------------------------------ storage
+  function localApi(method, path, body) {
     var o = { method: method, headers: {} };
     if (body !== undefined) { o.headers["Content-Type"] = "application/json"; o.body = JSON.stringify(body); }
     return fetch(API + (path || ""), o).then(function (r) {
@@ -49,26 +54,56 @@
       return r.json().then(function (j) { return { status: r.status, data: j }; }, function () { return { status: r.status, data: null }; });
     });
   }
+  function api(method, path, body) {
+    if (!S.store) return Promise.resolve({ status: 503, data: { error: "no storage" } });
+    return S.store(method, path, body).catch(function (e) { return { status: (e && e.status) || 0, data: { error: String((e && e.message) || e) } }; });
+  }
+  function ghConf() { return S.meta.github && S.meta.github.repo ? S.meta.github : null; }
+  function tokenKey() { return TOKEN + ghConf().repo; }
+  function getToken() { try { return localStorage.getItem(tokenKey()) || ""; } catch (e) { return ""; } }
+  /** GitHub storage when the project has one and this browser has a token; else the preview server's API. */
+  function pickStore() {
+    var g = ghConf();
+    S.store = null; S.gh = null;
+    if (g) {
+      S.backend = "github"; S.delay = 2500;       // each save is a commit: save after a pause in typing
+      var t = getToken();
+      if (t && window.MemoGitHub && window.MemoFormat) { S.gh = window.MemoGitHub(window.MemoFormat, g, t); S.store = S.gh.request; }
+      return;
+    }
+    S.backend = "local"; S.delay = 700; S.store = localApi;
+  }
 
   function load(first) {
-    return api("GET").then(function (r) {
+    var boot = first
+      ? fetch("data.json", { cache: "no-store" }).then(function (x) { return x.ok ? x.json() : {}; }).catch(function () { return {}; })
+        .then(function (d) { S.meta = d || {}; S.works = S.meta.works || []; S.published = !!S.meta.published; pickStore(); })
+      : Promise.resolve();
+    return boot.then(function () {
+      if (!S.store) throw { status: 0, why: "github-token" };
+      return api("GET");
+    }).then(function (r) {
       if (r.status !== 200) throw r;
-      S.writable = true; S.dir = r.data.dir; S.works = r.data.works || [];
+      S.writable = true; S.dir = r.data.dir;
+      if (r.data.works) S.works = r.data.works;
       merge(r.data.memos);
       setMode();
     }).catch(function (r) {
-      if (!first) return;
+      if (!first && S.writable) { if (r && (r.status === 401 || r.status === 403)) { S.writable = false; setMode("github-auth"); } return; }
       S.writable = false;
-      var why = r && r.status === 403 ? "forbidden" : r && r.status === 404 && r.data && r.data.error ? "off" : "static";
-      return fetch("data.json").then(function (x) { return x.ok ? x.json() : { published: false, memos: [] }; }).catch(function () { return { published: false, memos: [] }; })
-        .then(function (d) { S.published = !!d.published; S.memos = (d.memos || []).map(function (m) { m.mtime = 0; return m; }); setMode(why); });
+      var why = r && r.why ? r.why
+        : S.backend === "github" ? (r && (r.status === 401 || r.status === 403 || r.status === 404) ? "github-auth" : "github-offline")
+        : r && r.status === 403 ? "forbidden" : r && r.status === 404 && r.data && r.data.error ? "off" : "static";
+      if (S.backend === "local") S.memos = (S.meta.memos || []).map(function (m) { m.mtime = 0; return m; });
+      setMode(why);
     }).then(render);
   }
 
   /** Take a fresh list from the server; the memo being edited keeps the typed text unless it is saved. */
   function merge(list) {
     var cur = S.cur && byId(S.cur);
-    S.memos = list;
+    var pending = S.memos.filter(function (m) { return m._new; });
+    S.memos = pending.concat(list);
     if (cur && S.dirty) {
       var i = S.memos.findIndex(function (m) { return m.id === cur.id; });
       if (i >= 0) { var server = S.memos[i]; if (server.mtime !== cur.mtime) S.fresh = server; S.memos[i] = cur; }
@@ -80,13 +115,67 @@
     var ro = !S.writable;
     document.body.classList.toggle("readonly", ro);
     ["new", "today", "quick"].forEach(function (id) { $(id).disabled = ro; });
-    if (!ro) { mode.hidden = true; note.hidden = true; return; }
-    mode.hidden = false; mode.textContent = "보기 전용";
+    mode.hidden = false;
+    mode.textContent = ro ? "보기 전용" : S.backend === "github" ? "GitHub 저장" : "이 PC에 저장";
+    mode.title = S.backend === "github" && ghConf() ? "메모는 GitHub " + ghConf().repo + " 저장소에 저장됩니다" : "메모는 " + S.dir + "에 저장됩니다";
+    if (!ro) { note.hidden = true; return; }
     note.hidden = false;
-    if (why === "forbidden") note.innerHTML = "메모는 이 컴퓨터에서만 씁니다. 주소를 <code>localhost</code>로 열어 주세요(다른 PC에서 IP로 연 미리보기는 읽기·쓰기를 막습니다).";
+    var g = ghConf();
+    if (why === "github-token") note.innerHTML = "메모는 GitHub 비공개 저장소 <code>" + esc(g.repo) + "</code>에 저장됩니다. 이 브라우저에서 처음 쓰려면 한 번 연결합니다. " +
+      '<button type="button" class="btn primary" data-setup>GitHub 연결</button>';
+    else if (why === "github-auth") note.innerHTML = "GitHub 토큰으로 <code>" + esc(g.repo) + "</code>에 들어가지 못했습니다(만료되었거나 권한이 바뀜). " +
+      '<button type="button" class="btn primary" data-setup>토큰 다시 넣기</button>';
+    else if (why === "github-offline") note.innerHTML = "GitHub에 연결하지 못했습니다(네트워크). 잠시 뒤 다시 엽니다. 쓰던 내용은 이 브라우저에 남아 있습니다.";
+    else if (why === "forbidden") note.innerHTML = "메모는 이 컴퓨터에서만 씁니다. 주소를 <code>localhost</code>로 열어 주세요(다른 PC에서 IP로 연 미리보기는 읽기·쓰기를 막습니다).";
     else if (why === "off") note.innerHTML = "메모 탭이 꺼져 있습니다: <code>.docs-kit/bin/kit.py enable memos</code>";
     else note.innerHTML = (S.published ? "배포된 사이트의 메모 사본입니다(읽기만). " : "배포된 사이트에는 메모가 실리지 않습니다. ") +
-      "메모를 쓰고 고치려면 이 PC에서 문서 미리보기를 켜고 엽니다: <code>.docs-kit/bin/docs.sh start</code> → <code>http://localhost:8000/…/memos/app/</code>";
+      "메모를 쓰고 고치려면 이 PC에서 문서 미리보기를 켜고 엽니다: <code>.docs-kit/bin/docs.sh start</code>. 어디서나 쓰려면 <code>docs-kit.yml</code>의 <code>memos.github</code>(비공개 저장소)를 정합니다.";
+  }
+
+  // ------------------------------------------------------------ GitHub connection (token in this browser only)
+  function setup() {
+    var g = ghConf(); if (!g) return;
+    var url = "https://github.com/settings/personal-access-tokens/new";
+    dialog("GitHub 연결",
+      '<p class="small">메모는 비공개 저장소 <b>' + esc(g.repo) + "</b>에 저장됩니다. 이 브라우저에 그 저장소만 쓸 수 있는 토큰을 한 번 넣습니다(기기·브라우저마다 한 번).</p>" +
+      '<ol class="small steps">' +
+      '<li><a href="' + url + '" target="_blank" rel="noopener">토큰 만들기 페이지</a>를 엽니다(GitHub 로그인).</li>' +
+      "<li>Token name: 예) 메모-" + (/Mobi|Android|iPhone|iPad/.test(navigator.userAgent) ? "휴대폰" : "PC") + ". Expiration: 원하는 기간(만료되면 다시 넣음).</li>" +
+      "<li>Repository access: <b>Only select repositories</b> → <code>" + esc(g.repo) + "</code></li>" +
+      "<li>Permissions → Repository permissions → <b>Contents: Read and write</b> (Metadata: Read는 저절로)</li>" +
+      "<li><b>Generate token</b> → 나온 토큰(<code>github_pat_…</code>)을 복사해 아래에 붙여 넣습니다.</li></ol>" +
+      '<input type="password" id="gh-token" placeholder="github_pat_…" autocomplete="off" spellcheck="false">' +
+      '<p class="small muted" id="gh-msg">토큰은 이 브라우저(localStorage)에만 저장되고 GitHub 말고 어디로도 보내지 않습니다. 공용 PC에서는 쓰지 마세요. 기기를 잃어버리면 GitHub 설정에서 토큰을 지웁니다.</p>',
+      "연결", function () {
+        var t = $("gh-token").value.trim();
+        if (!t) return false;
+        $("gh-msg").textContent = "확인 중…";
+        window.MemoGitHub(window.MemoFormat, g, t).check().then(function (r) {
+          if (!r.ok) { $("gh-msg").textContent = "연결하지 못했습니다: " + r.why; return; }
+          try { localStorage.setItem(tokenKey(), t); } catch (e) { $("gh-msg").textContent = "이 브라우저가 저장을 막았습니다(개인 정보 보호 모드?)"; return; }
+          $("dialog").hidden = true;
+          toast("연결했습니다" + (r.priv ? "" : " — 주의: 이 저장소는 공개입니다"));
+          load(true);
+        });
+        return false;
+      });
+  }
+  function settings() {
+    var g = ghConf();
+    if (!g) { dialog("저장 위치", "<p>메모는 <code>" + esc(S.dir) + "</code>에 저장됩니다(이 PC의 문서 미리보기). 어디서나 쓰려면 <code>docs-kit.yml</code>의 <code>memos.github</code>를 정합니다.</p>", "", function () {}); return; }
+    var has = !!getToken();
+    dialog("저장 위치",
+      "<p>메모는 GitHub 저장소 <b>" + esc(g.repo) + "</b>" + (g.path ? "의 <code>" + esc(g.path) + "/</code>" : "") + "(" + esc(g.branch || "main") + ")에 저장됩니다. 저장할 때마다 커밋 하나입니다.</p>" +
+      "<p class=\"small\">이 브라우저: " + (has ? "연결됨" : "연결 안 됨") + '. <a href="https://github.com/' + esc(g.repo) + '" target="_blank" rel="noopener">저장소 열기</a></p>' +
+      (has ? '<p><button type="button" class="btn" id="gh-change">토큰 바꾸기</button> <button type="button" class="btn danger" id="gh-forget">이 브라우저에서 연결 끊기</button></p>' : ""),
+      has ? "" : "연결하기", function () { setup(); return false; });
+    if (has) {
+      $("gh-change").onclick = function () { setup(); };
+      $("gh-forget").onclick = function () {
+        try { localStorage.removeItem(tokenKey()); } catch (e) {}
+        $("dialog").hidden = true; toast("이 브라우저의 토큰을 지웠습니다(GitHub의 토큰 자체는 GitHub 설정에서 지웁니다)"); S.cur = null; load(true);
+      };
+    }
   }
 
   // ------------------------------------------------------------ filters
@@ -275,7 +364,7 @@
     try { localStorage.setItem(DRAFT + m.id, JSON.stringify({ title: m.title, body: m.body, work: m.work, tags: m.tags, base: m.mtime })); } catch (e) {}
     saveState("busy", "저장 대기");
     clearTimeout(S.timer);
-    S.timer = setTimeout(save, 700);
+    S.timer = setTimeout(save, S.delay);
     renderList();
   }
 
@@ -287,6 +376,7 @@
     // while the person has not chosen how to settle a conflict, keep the text locally and do not retry
     if (S.fresh && S.fresh.id === m.id && !S.force) { saveState("err", "충돌: 아래에서 고르기"); return Promise.resolve(); }
     if (S.saving) { S.timer = setTimeout(save, 300); return Promise.resolve(); }
+    if (m._new) return saveNew(m);
     S.saving = true; saveState("busy", "저장 중…");
     var body = { title: m.title, body: m.body, work: m.work, tags: m.tags, base: m.mtime };
     if (S.force) body.force = true;
@@ -309,10 +399,38 @@
       S.timer = setTimeout(save, 5000);
     });
   }
+  /** A memo made with "새 메모" exists only here until it has a title or text; then it is created (one commit on GitHub). */
+  function saveNew(m) {
+    if (!m.title.trim() && !m.body.trim()) { S.dirty = false; saveState("", ""); return Promise.resolve(); }
+    S.saving = true; saveState("busy", "저장 중…");
+    var sent = { title: m.title, body: m.body, work: m.work, tags: m.tags, pinned: m.pinned, archived: m.archived };
+    var oldId = m.id;
+    return api("POST", "", sent).then(function (r) {
+      S.saving = false;
+      if (r.status !== 201) throw r;
+      var still = byId(oldId) || m;
+      var changedSince = still.title !== sent.title || still.body !== sent.body || still.work !== sent.work || still.tags.join() !== sent.tags.join();
+      Object.assign(still, r.data, changedSince ? { title: still.title, body: still.body, work: still.work, tags: still.tags } : {});
+      delete still._new;
+      if (S.cur === oldId) S.cur = still.id;
+      if (S.checked.delete(oldId)) S.checked.add(still.id);
+      try { localStorage.removeItem(DRAFT + oldId); } catch (e) {}
+      S.dirty = changedSince; if (S.dirty) S.timer = setTimeout(save, 300);
+      saveState("ok", "저장됨 " + new Date().toTimeString().slice(0, 5));
+      render();
+    }).catch(function () {
+      S.saving = false; saveState("err", "저장 못 함: 이 브라우저에 보관 중, 다시 시도합니다");
+      S.timer = setTimeout(save, 5000);
+    });
+  }
   function saveState(cls, text) { var s = $("save"); s.className = "save small " + cls; s.textContent = text; }
 
   function setFlag(m, fields, msg) {
-    if (!S.writable) return;
+    if (!S.writable) return Promise.resolve();
+    if (m._new) {                                     // not created yet: keep the flag with it
+      if (fields.trashed) { S.memos = S.memos.filter(function (x) { return x !== m; }); S.dirty = false; render(); return Promise.resolve(); }
+      Object.assign(m, fields); if (msg) toast(msg); S.dirty = true; render(); return save();
+    }
     var keep = S.dirty && m.id === S.cur ? save() : Promise.resolve();
     return keep.then(function () {
       return api("PUT", "/" + encodeURIComponent(m.id), Object.assign({ base: m.mtime }, fields));
@@ -325,6 +443,19 @@
 
   function create(fields, open) {
     if (!S.writable) return Promise.resolve();
+    fields = fields || {};
+    if (open && !fields.title && !fields.body) {      // "새 메모": nothing is written until it has content
+      return save().then(function () {
+        var now = new Date();
+        var m = window.MemoFormat.apply(window.MemoFormat.blank(window.MemoFormat.newId(now, function (x) { return !!byId(x); }), now), fields);
+        m._new = true;
+        S.memos.unshift(m);
+        if (S.view === "trash" || S.view === "archive") S.view = "all";
+        select(m.id, true);
+        render();
+        return m;
+      });
+    }
     return save().then(function () { return api("POST", "", fields || {}); }).then(function (r) {
       if (r.status !== 201) { toast("메모를 만들지 못했습니다"); return; }
       S.memos.unshift(r.data);
@@ -339,8 +470,8 @@
     if (S.cur === id) return;
     var prev = S.cur && byId(S.cur);
     var go = function () {
-      // a memo left empty is not kept
-      if (prev && !prev.title.trim() && !prev.body.trim() && !prev.trashed && prev.id !== id) discard(prev);
+      // a new memo left empty is not kept
+      if (prev && prev._new && !prev.title.trim() && !prev.body.trim() && prev.id !== id) S.memos = S.memos.filter(function (x) { return x !== prev; });
       S.cur = id; S.fresh = null; S.force = false; S.dirty = false;
       var m = byId(id);
       if (m) {
@@ -355,13 +486,6 @@
     };
     if (S.dirty) save().then(go); else go();
   }
-  function discard(m) {
-    api("PUT", "/" + encodeURIComponent(m.id), { trashed: true, base: m.mtime }).then(function (r) {
-      if (r.status === 200) api("DELETE", "/" + encodeURIComponent(m.id));
-    });
-    S.memos = S.memos.filter(function (x) { return x.id !== m.id; });
-  }
-
   // ------------------------------------------------------------ dialog (no browser prompt / confirm)
   function dialog(title, html, okLabel, onOk) {
     $("dlg-title").textContent = title; $("dlg-body").innerHTML = html;
@@ -560,6 +684,11 @@
   function refresh() { if (S.writable && !S.saving && document.visibilityState === "visible") load().then(renderEditor); }
   window.addEventListener("focus", refresh);
   setInterval(refresh, 20000);
+  $("notice").addEventListener("click", function (e) { if (e.target.closest("[data-setup]")) setup(); });
+  $("settings").onclick = settings;
+  // phones: switching apps may end the page without beforeunload; save what is typed now
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden" && S.dirty) save(); });
+  window.addEventListener("pagehide", function () { if (S.dirty) save(); });
   window.addEventListener("beforeunload", function (e) { if (S.dirty) { save(); e.preventDefault(); e.returnValue = ""; } });
 
   var m = /[#&]memo=([\w-]+)/.exec(location.hash);

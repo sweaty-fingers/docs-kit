@@ -58,9 +58,21 @@ const RerunSchema = z
 	.strict();
 
 // Work memos (memos tab): files in docs/memos/; publish = also put a read-only copy on the built site
+// memos.github: memos are files in this GitHub repository, written from the browser with each reader's token, so the
+// published site can be used from any device; memos.dir is then a clone of it that agents read (bin/memos.py pulls)
+const MemoGitHubSchema = z
+	.object({
+		repo: z.string().regex(/^[\w.-]+\/[\w.-]+$/, 'owner/name'),
+		branch: z.string().default('main'),
+		path: z.string().default(''), // folder in the repository ('' = its root)
+		api: z.string().default('https://api.github.com'), // GitHub Enterprise: https://<host>/api/v3
+	})
+	.strict();
+
 const MemosSchema = z
 	.object({
 		publish: z.boolean().default(false),
+		github: MemoGitHubSchema.optional(),
 		dir: z.string().default('docs/memos'), // relative to the project root; a git-ignored folder keeps memos out of git
 	})
 	.strict();

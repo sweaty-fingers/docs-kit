@@ -4,7 +4,7 @@
 
 > **사이트 엔진은 Astro입니다**(0.16부터 `main`; MkDocs 판은 태그 `v0.15.4`). 이 문서는 Astro 판(1.0) 기준입니다. 엔진을 다시 만든 요구사항은 [prd.md](prd.md), 결정은 [decisions/0001](decisions/0001-astro-engine.md), 이전 검증 결과는 [site/README.md](site/README.md) "M7 verification"입니다. 탭 목록(§5.2~§5.3)의 원천은 `site/src/config/features.json`입니다.
 
-> 기준: docs-kit 1.1.0, 2026-11-21. 키트 동작을 바꾸면 이 문서의 해당 절도 같은 커밋에서 고칩니다(AGENTS-GUIDE §7).
+> 기준: docs-kit 1.2.0, 2026-11-21. 키트 동작을 바꾸면 이 문서의 해당 절도 같은 커밋에서 고칩니다(AGENTS-GUIDE §7).
 
 - **저장소가 있으면 저장소가 정본**입니다. 이 문서와 코드가 다르면 코드를 믿고 이 문서를 고칩니다.
 - **저장소를 가져갈 수 있으면** 복제가 가장 확실합니다(`git clone`, 또는 `git bundle create docs-kit.bundle --all`로 파일 하나로 옮김). 이 명세는 가져갈 수 없을 때 다시 만드는 기준이고, 순서는 §12입니다.
@@ -304,11 +304,14 @@ arc42 섹션 파일 이름: a01_goals, a02_constraints, a03_context, a04_solutio
 
 ### 6.12 메모 (`memos`)
 
-- 파일: 메모 하나 = `<memos.dir>/<번호>.md`(기본 `docs/memos/`, 번호 = 쓴 시각 `YYYYMMDD-HHMMSS`, 겹치면 `-2`). 머리말 값은 JSON으로 씀(YAML로도 읽힘): `title`(비면 본문 첫 줄), `created`, `updated`(시간대 포함), `work`(업무), `tags`(목록, `/`로 나누면 묶임), `pinned`, `archived`, `trashed`(휴지통에 넣은 시각, 비면 아님). 본문은 Markdown.
-- 사이트: 메모 파일은 페이지·정적 파일·검색 색인·문서 지도에 들어가지 않음. 탭 쪽 `memos/README.md`(키트)가 앱을 끼워 넣음. 빌드는 `memos/app/data.json`을 씀: 기본 `{"published": false, "memos": []}`, `memos.publish: true`면 휴지통 밖 메모의 읽기 전용 사본.
-- 앱 `memos/app/`(독립, 의존성 없음): 왼쪽(모든 메모 · 고정 · 오늘 · 최근 7일 · 업무 미지정 · 보관함 · 휴지통, 업무별, 태그 나무), 가운데(찾기 — 보관한 메모도, 작성일 범위, 정렬, 빠른 메모: Enter로 만들고 `#낱말`은 태그, 목록 체크로 여러 개 고르기), 오른쪽(제목, 업무 — 로드맵 업무와 지난 보고 업무 이름 제안, 태그, 서식 단추, 미리보기 — 체크 칸 누르기, 목록 이어 쓰기). 쓰는 대로 저장(0.7초 뒤, 실패하면 브라우저에 보관 후 다시), 다른 곳에서 파일이 바뀌면 충돌 막대(바뀐 것 불러오기 / 내 것으로 덮어쓰기), 창에 돌아오거나 20초마다 다시 읽음, 비운 새 메모는 남기지 않음, "오늘 메모"(`YYYY-MM-DD 업무 일지`, 태그 `일지`), "에이전트에게 넘기기"(주간 보고 / 다른 문서 요청 글 복사), 밝음·어두움(끼워 넣으면 쪽 테마), 휴대폰은 목록 ↔ 편집 한 칸씩. 주소 `#memo=<번호>`.
-- 미리보기 서버의 API(`site/src/lib/memos.ts`, 빌드한 사이트에는 없음): `GET /_kit/api/memos`(메모와 업무 제안), `POST`(만들기), `PUT /<번호>`(읽은 때의 `base` mtime이 다르면 409와 지금 파일, `force`면 덮어씀), `DELETE /<번호>`(휴지통의 메모만), `POST /empty-trash`. 요청은 `localhost`/`127.0.0.1`로 연 쪽에서 같은 출처만(다른 PC에서 IP로 연 미리보기는 403), 본문은 JSON만, 1 MB까지. 메모 저장은 열린 쪽을 다시 그리지 않음.
-- 도구 `bin/memos.py list [--work W] [--tag T]… [--since D] [--until D] [-q 낱말] [--archived] [--trash] [--json]`, `show <선택…> [--json]`(선택: 번호 또는 그 앞부분, `tag:`, `work:`, `since:`, `until:`; 휴지통은 빠짐). 읽기만 함.
+- 파일: 메모 하나 = `<번호>.md`(번호 = 쓴 시각 `YYYYMMDD-HHMMSS`, 겹치면 `-2`). 머리말 값은 JSON으로 씀(YAML로도 읽힘): `title`(비면 본문 첫 줄), `created`, `updated`(시간대 포함), `work`(업무), `tags`(목록, `/`로 나누면 묶임), `pinned`, `archived`, `trashed`(휴지통에 넣은 시각, 비면 아님). 본문은 Markdown. 읽기·쓰기 규칙은 세 곳이 같음: `site/src/lib/memos.ts`, `assets/memos/app/memo-format.js`(브라우저), `bin/memos.py`(시험: 단위 시험이 두 JS 구현의 결과가 같은지 확인).
+- 저장 방식(`docs-kit.yml` `memos`):
+  - `github: {repo, branch: main, path: '', api: https://api.github.com}`이면 GitHub 저장소(비공개). 앱이 브라우저에서 GitHub API로 씀(`github-store.js`): 목록은 GraphQL 한 번(폴더의 모든 파일 본문, 실패하면 REST 트리 + 블롭), 만들기·고치기·지우기는 contents API, 쓰기는 한 번에 하나씩(각각 커밋, 메시지 `memo: add|edit|trash|delete <번호> <제목>`), 메모의 버전 = 파일 blob sha(옛 sha로 고치면 GitHub이 409 → 충돌 막대). 토큰은 읽는 사람이 브라우저마다 넣는 fine-grained 토큰(그 저장소만, Contents 읽기·쓰기), `localStorage`의 `docs-kit-memo-github-token:<repo>`에만. 자동 저장은 타자를 멈추고 2.5초 뒤. `dir`은 그 저장소의 복제본(에이전트용).
+  - 없으면 이 PC의 `dir`(기본 `docs/memos/`)과 미리보기 서버의 API(아래).
+- 사이트: 메모 파일은 페이지·정적 파일·검색 색인·문서 지도에 들어가지 않음. 탭 쪽 `memos/README.md`(키트)가 앱을 끼워 넣음. 빌드는 `memos/app/data.json`을 씀: `{published, github: 위 설정 또는 null, works: 로드맵 업무와 주간 보고 업무 이름, memos: publish일 때만 휴지통 밖 메모의 읽기 전용 사본}`(토큰·메모 본문은 GitHub 방식에서 들어가지 않음).
+- 앱 `memos/app/`(독립, 의존성 없음, `memo-format.js` → `github-store.js` → `app.js`): 왼쪽(모든 메모 · 고정 · 오늘 · 최근 7일 · 업무 미지정 · 보관함 · 휴지통, 업무별, 태그 나무), 가운데(찾기 — 보관한 메모도, 작성일 범위, 정렬, 빠른 메모: Enter로 만들고 `#낱말`은 태그, 목록 체크로 여러 개 고르기), 오른쪽(제목, 업무 — 업무 이름 제안, 태그, 서식 단추, 미리보기 — 체크 칸 누르기, 목록 이어 쓰기). "새 메모"는 제목이나 본문이 생길 때 처음 저장(비운 채 떠나면 아무것도 쓰지 않음). 쓰는 대로 저장(실패하면 브라우저에 보관 후 다시, 화면을 떠날 때·휴대폰에서 앱을 바꿀 때 바로), 다른 곳에서 파일이 바뀌면 충돌 막대(바뀐 것 불러오기 / 내 것으로 덮어쓰기), 창에 돌아오거나 20초마다 다시 읽음, "오늘 메모"(`YYYY-MM-DD 업무 일지`, 태그 `일지`), "에이전트에게 넘기기"(주간 보고 / 다른 문서 요청 글 복사), ⚙(저장 위치, GitHub 연결·토큰 바꾸기·끊기), 밝음·어두움(끼워 넣으면 쪽 테마), 휴대폰은 목록 ↔ 편집 한 칸씩. 주소 `#memo=<번호>`.
+- 미리보기 서버의 API(`site/src/lib/memos.ts`, GitHub 방식이 아닐 때, 빌드한 사이트에는 없음): `GET /_kit/api/memos`(메모와 업무 제안), `POST`(만들기), `PUT /<번호>`(읽은 때의 `base` mtime이 다르면 409와 지금 파일, `force`면 덮어씀), `DELETE /<번호>`(휴지통의 메모만), `POST /empty-trash`. 요청은 `localhost`/`127.0.0.1`로 연 쪽에서 같은 출처만(다른 PC에서 IP로 연 미리보기는 403), 본문은 JSON만, 1 MB까지. 메모 저장은 열린 쪽을 다시 그리지 않음. `github-store.js`는 같은 요청을 GitHub으로 바꿔 처리하므로 앱은 어느 쪽과 말하는지 모름.
+- 도구 `bin/memos.py list [--work W] [--tag T]… [--since D] [--until D] [-q 낱말] [--archived] [--trash] [--json]`, `show <선택…> [--json]`(선택: 번호 또는 그 앞부분, `tag:`, `work:`, `since:`, `until:`; 휴지통은 빠짐), `sync`. 메모 폴더가 그 자체로 git 복제본이면(프로젝트 저장소 안의 폴더가 아니면) 명령마다 먼저 `git pull --ff-only`(`--no-pull`, `DOCS_MEMOS_NO_PULL=1`로 끔). 메모 파일은 읽기만 함.
 - 문서 검색(`docs_search.py`)과 근거 점검은 메모 폴더를 읽지 않음(메모는 근거가 아님).
 
 ---

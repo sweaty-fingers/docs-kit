@@ -10,12 +10,16 @@
 Selectors (show, and weekly_draft.py --memos): a memo id or its start (20261121 = that day), tag:<tag> (also its
 sub-tags), work:<업무>, since:<YYYY-MM-DD>, until:<YYYY-MM-DD> (by the day the memo was written). Ids and tags/works
 add memos; since/until narrow them. Archived memos count when named or selected; trashed ones never.
-Where memos live: docs-kit.yml `memos.dir` (default docs/memos). Standard library only (Python 3.8+); reads files only.
+Where memos live: docs-kit.yml `memos.dir` (default docs/memos). When that folder is its own git clone (memos written
+on the web into a GitHub repository, docs-kit.yml `memos.github`), every command first runs `git pull --ff-only` there,
+so memos written on another device are read too (skip with --no-pull or DOCS_MEMOS_NO_PULL=1; `memos.py sync` only
+pulls). Standard library only (Python 3.8+); reads files only (and pulls).
 """
 import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 
 KIT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -29,7 +33,7 @@ def memo_dir(root=ROOT):
     if os.path.exists(p):
         text = open(p, encoding="utf-8").read()
         m = re.search(r"^memos\s*:\s*\{[^}\n]*\bdir\s*:\s*['\"]?([^,'\"}\n]+)", text, re.M) or \
-            re.search(r"^memos\s*:\s*\n(?:[ \t]+.*\n)*?[ \t]+dir\s*:\s*['\"]?([^'\"#\n]+)", text, re.M)
+            re.search(r"^memos\s*:[^\n{]*\n(?:[ \t]+.*\n|[ \t]*\n)*?[ \t]+dir\s*:\s*['\"]?([^'\"#\n]+)", text, re.M)
         if m:
             d = m.group(1).strip()
     return os.path.normpath(os.path.join(root, d))
@@ -75,8 +79,32 @@ def parse(mid, text):
             "pinned": meta.get("pinned") is True, "archived": meta.get("archived") is True, "trashed": s("trashed"), "body": body}
 
 
-def load(root=ROOT):
+_pulled = set()
+
+
+def pull(d, quiet=True):
+    """git pull --ff-only in the memo folder when it is a clone of its own (never the project's repository)."""
+    if d in _pulled or os.environ.get("DOCS_MEMOS_NO_PULL") or not os.path.isdir(os.path.join(d, ".git")):
+        return None
+    _pulled.add(d)
+    try:
+        r = subprocess.run(["git", "-C", d, "pull", "--ff-only", "-q"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                           universal_newlines=True, timeout=60)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        print(f"memos: could not pull {d}: {e} (reading what is here)", file=sys.stderr)
+        return False
+    if r.returncode != 0:
+        print(f"memos: git pull in {os.path.relpath(d, ROOT)} failed, reading what is here:\n  {r.stderr.strip()}", file=sys.stderr)
+        return False
+    if not quiet:
+        print(f"memos: {os.path.relpath(d, ROOT)} is up to date with its remote")
+    return True
+
+
+def load(root=ROOT, fetch=True):
     d = memo_dir(root)
+    if fetch:
+        pull(d)
     out = []
     for f in sorted(os.listdir(d)) if os.path.isdir(d) else []:
         mid = f[:-3]
@@ -154,8 +182,16 @@ def main():
     sh = sub.add_parser("show", help="print memos in full")
     sh.add_argument("selectors", nargs="+")
     sh.add_argument("--json", action="store_true")
+    sub.add_parser("sync", help="only pull the memo folder (when it is a git clone)")
+    ap.add_argument("--no-pull", action="store_true", help="do not git pull the memo folder first")
     a = ap.parse_args()
-    memos = load()
+    if a.cmd == "sync":
+        d = memo_dir()
+        r = pull(d, quiet=False)
+        if r is None:
+            print(f"memos: {os.path.relpath(d, ROOT)} is not a git clone of its own; nothing to pull")
+        sys.exit(0 if r is not False else 1)
+    memos = load(fetch=not a.no_pull)
     if a.cmd == "list":
         out = []
         for m in memos:

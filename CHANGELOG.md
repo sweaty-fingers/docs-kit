@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.2.0 — 2026-11-21
+
+Memos can be written on the published site from any device (computer, phone), stored in a GitHub repository.
+
+- docs-kit.yml `memos.github: {repo, branch, path, api}`: the memo app writes the memos as files in that repository
+  (make it private) straight from the browser through the GitHub API (`assets/memos/app/github-store.js`), with a
+  fine-grained token each reader puts in once per browser (only that repository, Contents read and write; kept in
+  localStorage, sent only to GitHub). Reading is one GraphQL request; each save is a commit; a memo's version is the
+  file's sha, so an edit made on another device meanwhile is caught (409 → the same conflict choice as before).
+  Writes are queued; autosave waits for a 2.5 s pause in typing; a new memo is written only once it has content.
+- Memo app: "GitHub 연결" setup with the token steps, ⚙ storage settings (change token, disconnect), saves when the
+  page is hidden (phones switching apps), mode badge (GitHub 저장 / 이 PC에 저장 / 보기 전용)
+- `memos.dir` is then the agent's clone of that repository: `bin/memos.py` (and `weekly_draft.py --memos`) run
+  `git pull --ff-only` there first when it is a clone of its own (never the project repository); `memos.py sync`;
+  `--no-pull` / `DOCS_MEMOS_NO_PULL=1`. Fix: `memos.dir` written under a `memos:` line with a comment was not read.
+- The memo file format lives in `assets/memos/app/memo-format.js` too; a unit test checks it writes and reads exactly
+  what the server does. `memos/app/data.json` now carries the storage settings and the 업무 names (never a token).
+- Without `memos.github` nothing changes (local folder through the preview)
+
 ## 1.1.0 — 2026-11-21
 
 New tab `memos` (메모): work memos people write directly, which agents use as material for weekly reports and other

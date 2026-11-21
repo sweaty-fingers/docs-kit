@@ -115,3 +115,17 @@ test('memos: a memo file round-trips; tags are cleaned; the title falls back to 
 	assert.equal(again.body, m.body);
 	assert.deepEqual(cleanTags('a, #b, a'), ['a', 'b']);
 });
+
+test('memos: the browser format (memo-format.js, GitHub storage) writes and reads the same files as the server', async () => {
+	const { createRequire } = await import('node:module');
+	const F = createRequire(import.meta.url)('../../assets/memos/app/memo-format.js');
+	const { parseMemo, serializeMemo } = await import('../src/lib/memos.ts');
+	const m = { ...F.blank('20261121-153012', new Date(2026, 10, 21, 15, 30, 12)), title: '제목 "q"', body: '# 본문\n- [ ] 할 일\n', work: '업무', tags: ['a/b', '회의'], pinned: true };
+	assert.equal(F.serialize(m), serializeMemo(m as any));
+	const text = F.serialize(m);
+	const a = F.parse(m.id, text, 0), b = parseMemo(m.id, text, 0);
+	assert.deepEqual(a, b);
+	assert.equal(F.newId(new Date(2026, 10, 21, 15, 30, 12)), '20261121-153012');
+	assert.equal(F.newId(new Date(2026, 10, 21, 15, 30, 12), (id: string) => id === '20261121-153012'), '20261121-153012-2');
+	assert.match(F.stamp(new Date(2026, 0, 2, 3, 4, 5)), /^2026-01-02T03:04:05[+-]\d\d:\d\d$/);
+});

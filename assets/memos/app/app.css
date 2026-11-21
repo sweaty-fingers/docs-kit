@@ -109,9 +109,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .dialog { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.35); display: flex; align-items: center; justify-content: center; z-index: 20; padding: 16px; }
 .dlg { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); width: min(560px, 100%); padding: 16px 18px; max-height: 90vh; overflow-y: auto; }
 .dlg h2 { margin: 0 0 10px; font-size: 17px; }
-.dlg textarea, .dlg input[type="text"] { width: 100%; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.dlg textarea, .dlg input[type="text"], .dlg input[type="password"] { width: 100%; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
 .dlg textarea { min-height: 150px; font-family: var(--mono); font-size: 12.5px; }
 .dlg label { display: flex; gap: 6px; align-items: center; margin: 4px 0; }
+.dlg .steps { padding-left: 20px; margin: 8px 0 10px; } .dlg .steps li { margin: 3px 0; } .dlg a { color: var(--accent-strong); }
+.dlg code { font-family: var(--mono); font-size: 12px; background: var(--code); padding: 1px 4px; border-radius: 4px; }
+.notice .btn { margin-left: 6px; padding: 2px 10px; min-height: 28px; }
 .dlg-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
 .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 8px 14px; border-radius: 10px; z-index: 30; font-size: 13px; box-shadow: var(--shadow); max-width: 90vw; }
 

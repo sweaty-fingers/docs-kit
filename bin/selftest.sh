@@ -194,7 +194,9 @@ built = [os.path.join(dp, f) for dp, dn, fn in os.walk(S) for f in fn]
 checks = {
     "memo page embeds the app": "app/index.html?embed=1" in art("memos/index.html"),
     "app files": all(os.path.exists(f"{S}/memos/app/{f}") for f in ("index.html", "app.js", "app.css")),
-    "data stub": json.load(open(f"{S}/memos/app/data.json", encoding="utf-8")) == {"published": False, "memos": []},
+    "data stub": (lambda d: d["published"] is False and d["memos"] == [] and d["github"] is None and "시험 업무" in d["works"])(
+        json.load(open(f"{S}/memos/app/data.json", encoding="utf-8"))),
+    "app scripts": all(f'src="{f}"' in open(f"{S}/memos/app/index.html", encoding="utf-8").read() for f in ("memo-format.js", "github-store.js", "app.js")),
     "memo files not published": not any("20260108-093000" in p for p in built),
     "memos not in search": "20260108" not in open(f"{S}/_kit/pagefind/pagefind-entry.json", encoding="utf-8").read(),
     "weekly card lists memos": "참고한 메모" in art("weekly/2026-01-12.html") and "20260110-090000" in art("weekly/2026-01-12.html"),
