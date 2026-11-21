@@ -1,4 +1,4 @@
-/* Sprint board (docs-kit hooks/plan.py writes data.js: window.PLAN_BOARD).
+/* Sprint board (docs-kit site/src/lib/plan.ts writes data.js: window.PLAN_BOARD).
  *
  * Cards are the backlog items and the WBS items outside a backlog of docs/plan/scope.yml. A sprint (docs/plan/
  * sprints.json) holds which cards it took and in which column: items {id: todo | doing | review | done}, blocked

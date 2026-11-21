@@ -149,7 +149,6 @@ git add .docs-kit && git commit -m "docs-kit <버전>"
 | `site/src/config/features.json` | 탭 목록, 묶음, 기본 분야 (`kit.py`와 사이트가 함께 읽음) |
 | `docker/` | 사이트 이미지(Node + 사이트 패키지)와 진입 스크립트 |
 | `decisions/` | 키트의 큰 결정 기록 |
-| `hooks/`, `mkdocs.base.yml` | MkDocs 판의 훅과 설정(참고용, 사이트는 쓰지 않음; 탭 모듈은 `site/src/lib/`). `hooks/kitconf.py`는 `kit.py`가 씀 |
 | `assets/` | 사이트에 들어가는 키트 페이지·뷰어·스타일 (`assets/<탭>/`, `_kit/`, `docs-standard.md`, `docs-kit.md`) |
 | `template/base/`, `template/features/<id>/` | `kit.py init`·`enable`이 복사하는 시작 파일 |
 | `template/agents/AGENTS.docs-kit.md` | 프로젝트 AGENTS.md에 넣을 절 |

@@ -19,6 +19,9 @@ public/_kit/            kit.css, kit.js (no dependencies)
 tests/                  node --test
 ```
 
+Comments such as "port of hooks/plan.py" name the MkDocs edition's hook a module was ported from; those files are at
+tag `v0.15.4` (removed from `main` in 1.0.0).
+
 ## Milestones (prd.md §11)
 
 | Milestone | State |

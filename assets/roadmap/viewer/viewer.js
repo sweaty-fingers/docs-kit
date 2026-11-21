@@ -1,4 +1,4 @@
-// Roadmap viewer (docs-kit hooks/roadmap.py writes data.js: window.ROADMAP = {svg, items, units, refKinds, ...}).
+// Roadmap viewer (docs-kit site/src/lib/roadmap.ts writes data.js: window.ROADMAP = {svg, items, units, refKinds, ...}).
 // Click a station: the panel shows its details, before / after, related documents by kind, its unit.
 // Hover: the chain before and after it. #item=<id> opens an item. Filters: unit, status, text.
 (function () {

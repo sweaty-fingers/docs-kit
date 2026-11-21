@@ -1,5 +1,5 @@
 # {{PROJECT}} 단계와 일의 분해 (Epic > Feature > Story > Backlog > WBS). 현황판의 작업량과 진척, 예측, 단계별 진행,
-# 연구 질문이 모두 이 파일에서 나옵니다 (docs-kit hooks/plan.py, 편집 안내: 메뉴 현황판 › 현황판 편집 안내).
+# 연구 질문이 모두 이 파일에서 나옵니다 (docs-kit 현황판 탭, 편집 안내: 메뉴 현황판 › 현황판 편집 안내).
 #   level: epic | feature | story | backlog | wbs     parent: 위 항목 id   (평평한 목록: 옮기려면 parent만 바꿈)
 #   size:  포인트(1 ≈ 이상적인 하루 작업). 숫자 하나 또는 폭 [최소, 최대]. 한 갈래에 한 번만
 #   상태:  roadmap: <로드맵 id> | issue: <번호> | status: todo | doing | done | dropped (+ date)

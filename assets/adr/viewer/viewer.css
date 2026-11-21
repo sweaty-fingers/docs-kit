@@ -262,7 +262,7 @@ button, select { font: inherit; color: inherit; }
   .drawer { width: 100%; top: auto; height: 65%; border-left: 0; border-top: 1px solid var(--line); transform: translateY(105%); }
   .drawer.open { transform: none; }
 }
-/* Verification record chips (hooks/records.py) */
+/* Verification record chips (site/src/lib/records.ts) */
 .chip.vr::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; background: var(--faint); vertical-align: 1px; }
 .chip.vr.pass::before { background: var(--ok); }
 .chip.vr.partial::before { background: var(--warn); }

@@ -11,7 +11,7 @@
     .docs-kit/bin/kit.py update                                   move the kit to origin/<its branch> (if clean), show what changed
     .docs-kit/bin/kit.py migrate                                  move site settings from mkdocs.yml into docs-kit.yml
 
-The project is the folder that contains .docs-kit/ (or DOCS_ROOT). Settings: <project>/docs-kit.yml (hooks/kitconf.py).
+The project is the folder that contains .docs-kit/ (or DOCS_ROOT). Settings: <project>/docs-kit.yml (bin/kitconf.py).
 Edits keep the file's comments: only the lines that change are rewritten. Standard library only (Python 3.8+), so it
 runs on the host without the docs image.
 """
@@ -24,7 +24,7 @@ import subprocess
 import sys
 
 KIT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.join(KIT, "hooks"))
+sys.path.insert(0, os.path.join(KIT, "bin"))
 import kitconf  # noqa: E402
 
 ROOT = os.path.abspath(os.environ.get("DOCS_ROOT") or os.path.dirname(KIT))

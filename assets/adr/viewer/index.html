@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>아키텍처</title>
-  <!-- Standalone C4 viewer. Data: data.json (written by docs-kit hooks/adr.py
+  <!-- Standalone C4 viewer. Data: data.json (written at build time by docs-kit site/src/lib/records.ts
        from docs/adr/c4-model.yml and the ADR front matter). Guide: adr/guide.md §9 -->
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="../../_kit/vendor/pretendard/pretendardvariable-dynamic-subset.css">
@@ -64,7 +64,7 @@
     <aside class="drawer" id="drawer" aria-label="상세"></aside>
   </main>
 
-  <script src="vendor/elk.bundled.js"></script>  <!-- elkjs 0.9.3, vendored: vendor/README.txt -->
+  <script src="vendor/elk.bundled.js"></script>  <!-- elkjs from npm (version: the site's package-lock.json), served here by the build -->
   <script src="viewer.js"></script>
 </body>
 </html>

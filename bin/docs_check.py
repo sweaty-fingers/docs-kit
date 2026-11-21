@@ -42,7 +42,7 @@ import docs_search  # noqa: E402
 
 DEFAULT_CFG = {
     "code_roots": ["packages", "tools", "docker", "deploy", "config", ".docs-kit/hooks", ".docs-kit/bin", "docs/plan",
-                   "docs/roadmap", "docs/graph", "mkdocs.yml", ".docs-kit/mkdocs.base.yml"],
+                   "docs/roadmap", "docs/graph", "mkdocs.yml"],
     "path_roots": ["tools", "packages", "docs", "docker", "deploy", "config", "assets", ".docs-kit", "notebooks", "build"],
     "ports_doc": "",          # the ports reference; empty: the first docs/reference/r*_ports*.md
     "number_free": ["docs/background/", "docs/glossary/", "docs/reference/"],

@@ -1,6 +1,6 @@
 /* Standalone C4 viewer (docs/adr/viewer/index.html).
  *
- * data.json (docs-kit hooks/adr.py) gives the views with the nodes and
+ * data.json (docs-kit site/src/lib/records.ts) gives the views with the nodes and
  * edges each one shows, element details, relations and ADR summaries.
  * Layout: ELK "layered" with orthogonal edge routing, so edges bend at right
  * angles and go around cards. Cards are HTML, edges SVG, both on one stage that
@@ -504,7 +504,7 @@
       "</div>";
   }
 
-  /* Verification records (docs/records/, added to data.json by docs-kit hooks/records.py). */
+  /* Verification records (docs/records/, added to data.json by docs-kit site/src/lib/records.ts). */
   function vrChips(nums) {
     var R = D.records || {};
     return nums.map(function (n) {

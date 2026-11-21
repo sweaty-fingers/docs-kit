@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parse as parseYaml } from 'yaml';
-import { ASSETS_DIR, DOCS_DIR, KIT_ASSET_SKIP } from '../config/paths.ts';
+import { ASSETS_DIR, DOCS_DIR } from '../config/paths.ts';
 import { BY_ID, enabled, FEATURES, loadConfig, type Feature, type KitConfig } from '../config/load.ts';
 import { blocks, fixLists, markers, mdInHtml, snippets, splitFrontMatter, eachLine } from '../markdown/pre.ts';
 import { renderMarkdown, type Heading } from '../markdown/pipeline.ts';
@@ -55,7 +55,6 @@ function walk(dir: string, base = ''): string[] {
 export function scanFiles(): Map<string, SourceFile> {
 	const files = new Map<string, SourceFile>();
 	for (const rel of walk(ASSETS_DIR)) {
-		if (KIT_ASSET_SKIP.some((p) => rel.startsWith(p))) continue;
 		files.set(rel, { rel, abs: path.join(ASSETS_DIR, rel), origin: 'kit' });
 	}
 	for (const rel of walk(DOCS_DIR)) files.set(rel, { rel, abs: path.join(DOCS_DIR, rel), origin: 'project' });

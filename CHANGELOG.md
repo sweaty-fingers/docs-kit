@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.0.0 — 2026-11-21
+
+The Astro edition is the docs-kit. No change to the project's `docs/` format; projects on 0.16 or later need nothing.
+Projects still on the MkDocs edition (0.15): update the submodule to `main`, run `.docs-kit/bin/kit.py migrate`, then
+`.docs-kit/bin/docs.sh build --strict` (details: README §2).
+
+- Removed what only the MkDocs edition used: `hooks/` (the tab hooks; `kitconf.py` moved to `bin/kitconf.py`),
+  `mkdocs.base.yml`, the Material theme CSS (`theme.css`, `adr.css`, `diagram-zoom.css`), MathJax and its config,
+  the old `links.js` / `rerun-embed.js` / `diagram-zoom.js`, and the vendored copies of MathJax, Mermaid 11 and
+  elkjs 0.9 (Mermaid, KaTeX and elkjs come from npm). The MkDocs edition stays at tag v0.15.4.
+- Removed duplicate files that a sync tool had copied into the repository ("docker/run 2.sh", "docker/Dockerfile 2",
+  "decisions/0001-astro-engine 2.md", two fixture copies — one of them was built as an extra selftest page);
+  `.gitignore` now keeps such " 2" copies out
+- docs-standard §12: version rules from 1.0 (section numbers, appendices, document kinds and front-matter fields
+  change only with a major version and a migration note); the original 1.0 condition on arc42 is recorded as not yet checked
+- Comments in viewers, starter files and tools name the site modules that now write their data
+
 ## 0.21.0 — 2026-11-21
 
 M8 of the Astro edition: documents. prd.md is now "implemented" (M0-M8; open items in site/README.md).

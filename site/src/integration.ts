@@ -7,7 +7,7 @@ import type { AstroIntegration } from 'astro';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
-import { ASSETS_DIR, CONFIG_FILE, DOCS_DIR, KIT_ASSET_SKIP, MKDOCS_FILE } from './config/paths.ts';
+import { ASSETS_DIR, CONFIG_FILE, DOCS_DIR, MKDOCS_FILE } from './config/paths.ts';
 import { enabled, loadConfig } from './config/load.ts';
 import { scanFiles, scanPages } from './lib/site.ts';
 import { clearWarningFile, readWarnings, resetWarnings } from './lib/warnings.ts';
@@ -31,7 +31,7 @@ function vendorFiles(): Map<string, string> {
 	for (const f of fs.readdirSync(path.join(mer, 'chunks', 'mermaid.esm.min')))
 		if (!f.endsWith('.map')) m.set(`_kit/vendor/mermaid/chunks/mermaid.esm.min/${f}`, path.join(mer, 'chunks', 'mermaid.esm.min', f));
 	m.set('_kit/vendor/mermaid/LICENSE', path.join(path.dirname(mer), 'LICENSE'));
-	// elkjs (npm) for the C4 viewer, over the copy that the MkDocs edition vendored in assets/adr/viewer/vendor/
+	// elkjs (npm) for the C4 viewer, at the path the viewer loads it from
 	const elk = path.dirname(require.resolve('elkjs/package.json'));
 	m.set('adr/viewer/vendor/elk.bundled.js', path.join(elk, 'lib', 'elk.bundled.js'));
 	if (fs.existsSync(path.join(elk, 'LICENSE.md'))) m.set('adr/viewer/vendor/elkjs-LICENSE.txt', path.join(elk, 'LICENSE.md'));
@@ -113,7 +113,6 @@ export default function kit(): AstroIntegration {
 				}
 				// 2. static files (project first) and vendored libraries
 				for (const [rel, abs] of staticFiles()) {
-					if (KIT_ASSET_SKIP.some((p) => rel.startsWith(p)) && !vendorFiles().has(rel)) continue;
 					const to = path.join(out, rel);
 					if (fs.existsSync(to)) continue;
 					fs.mkdirSync(path.dirname(to), { recursive: true });

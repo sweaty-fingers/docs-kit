@@ -13,7 +13,7 @@ and overviews (발행물) rank a little lower than the canonical documents they 
 of its own words in a section gets nothing from that section: "찾은 곳 없음" is an answer, not a failure.
 
 Standard library only (Python 3.8+), so it runs on the host. The index is cached in build/rag/index.json and rebuilt
-when a file changes. Used by docs-kit hooks/quality.py (retrieval evaluation) and by agents (AGENTS.md).
+when a file changes. Used by bin/docs_check.py (retrieval evaluation on the grounding page) and by agents (AGENTS.md).
 """
 import argparse
 import hashlib

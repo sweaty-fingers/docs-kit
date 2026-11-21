@@ -17,11 +17,3 @@ export const OUT_DIR = path.resolve(process.env.DOCS_OUT || path.join(ROOT, 'bui
 export const WORK_DIR = path.join(ROOT, 'build', '.kit');
 export const CONFIG_FILE = path.join(ROOT, 'docs-kit.yml');
 export const MKDOCS_FILE = path.join(ROOT, 'mkdocs.yml');
-
-/** Kit assets that belong to the MkDocs edition only (Material theme CSS, MathJax, the scripts this engine replaced).
- *  The roadmap / dashboard styles and plan.js stay: their pages reuse them through the compatibility layer in kit.css. */
-export const KIT_ASSET_SKIP = [
-	'_kit/stylesheets/theme.css', '_kit/stylesheets/adr.css', '_kit/stylesheets/diagram-zoom.css',
-	'_kit/javascripts/mathjax.js', '_kit/javascripts/links.js', '_kit/javascripts/rerun-embed.js', '_kit/javascripts/diagram-zoom.js',
-	'_kit/vendor/mathjax/', '_kit/vendor/mermaid/', '_kit/vendor/README.txt',
-];

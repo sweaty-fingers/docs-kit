@@ -2,9 +2,9 @@
 
 이 문서는 docs-kit **전체를 다른 세션·다른 환경에서 그대로 다시 만들거나 이어서 고칠 수 있도록** 구조, 동작, 형식, 도구, 시험, 에이전트 운영을 한곳에 적은 명세입니다. 에이전트가 처음 읽는 문서로 씁니다.
 
-> **사이트 엔진은 Astro입니다**(0.16부터 `main`; MkDocs 판은 태그 `v0.15.4`). 이 문서는 Astro 판(0.21) 기준입니다. 엔진을 다시 만든 요구사항은 [prd.md](prd.md), 결정은 [decisions/0001](decisions/0001-astro-engine.md), 이전 검증 결과는 [site/README.md](site/README.md) "M7 verification"입니다. 탭 목록(§5.2~§5.3)의 원천은 `site/src/config/features.json`입니다.
+> **사이트 엔진은 Astro입니다**(0.16부터 `main`; MkDocs 판은 태그 `v0.15.4`). 이 문서는 Astro 판(1.0) 기준입니다. 엔진을 다시 만든 요구사항은 [prd.md](prd.md), 결정은 [decisions/0001](decisions/0001-astro-engine.md), 이전 검증 결과는 [site/README.md](site/README.md) "M7 verification"입니다. 탭 목록(§5.2~§5.3)의 원천은 `site/src/config/features.json`입니다.
 
-> 기준: docs-kit 0.21.0, 2026-11-21. 키트 동작을 바꾸면 이 문서의 해당 절도 같은 커밋에서 고칩니다(AGENTS-GUIDE §7).
+> 기준: docs-kit 1.0.0, 2026-11-21. 키트 동작을 바꾸면 이 문서의 해당 절도 같은 커밋에서 고칩니다(AGENTS-GUIDE §7).
 
 - **저장소가 있으면 저장소가 정본**입니다. 이 문서와 코드가 다르면 코드를 믿고 이 문서를 고칩니다.
 - **저장소를 가져갈 수 있으면** 복제가 가장 확실합니다(`git clone`, 또는 `git bundle create docs-kit.bundle --all`로 파일 하나로 옮김). 이 명세는 가져갈 수 없을 때 다시 만드는 기준이고, 순서는 §12입니다.
@@ -75,8 +75,6 @@ docs-kit/
     _kit/stylesheets/{roadmap,plan}.css  _kit/javascripts/plan.js   # 현황판·로드맵 쪽 (md-typeset 호환 층으로 씀)
     adr/{README,log,c4,guide,template}.md  adr/viewer/{index.html,viewer.js,viewer.css}
     arc42/ publications/ experiments/ records/ weekly/ roadmap/ graph/ plan/ quality/   # 탭 페이지, 뷰어, 보드
-  hooks/                          # MkDocs 판의 훅(참고용, 사이트는 쓰지 않음). kitconf.py만 bin/kit.py가 씀
-  mkdocs.base.yml                 # MkDocs 판 설정(참고용, 쓰지 않음)
   docker/{Dockerfile,run.sh}      # Docker 실행 방식의 이미지
   template/
     base/{docs-kit.yml,docs/README.md}
@@ -85,7 +83,7 @@ docs-kit/
   tests/fixtures/all/             # selftest 고정 입력 (docs/ 아래 그대로, README.append.md)
   tests/site-diff-allow.txt       # MkDocs 판과 비교할 때 받아들인 차이
   bin/
-    kit.py init.sh docs.sh selftest.sh site_diff.py compare_editions.sh
+    kit.py kitconf.py(탭 목록·docs-kit.yml 읽기) init.sh docs.sh selftest.sh site_diff.py compare_editions.sh
     docs_search.py docs_check.py docs_ask.py serve.sh plan_board.py repro.sh weekly_draft.py
 ```
 
@@ -384,7 +382,7 @@ MkDocs 판과의 비교(엔진을 크게 바꿨을 때): `bin/compare_editions.s
 ## 13. 버전과 주의점
 
 - 키트에는 회사·프로젝트 고유 내용을 넣지 않음. 프로젝트별 값(임베딩 지시문 `embed_instruct`, 분야, 포트 표)은 프로젝트 설정에.
-- 버전: 형식·탭 추가 = 마이너, 고침 = 패치. 1.0 고정 조건과 그 뒤 규칙은 규격 §12(섹션 번호, 부록, 문서 종류, 머리말 필드 고정, 바꾸면 메이저 + 이전 안내).
+- 버전: 1.0.0(2026-11-21)부터 섹션 번호, 부록, 문서 종류, 머리말 필드를 바꾸면 메이저 + 이전 안내, 형식을 바꾸지 않는 기능·탭 추가 = 마이너, 고침 = 패치(규격 §12).
 - CHANGELOG 항목은 영어 한 문단, "무엇이 · 어떻게 · 경고"를 적음. 형식 이전이 필요하면 그 사실을 첫 줄에.
 - YAML 함정: 흐름 맵 값에 `, `가 있으면 잘려서 모르는 키(경고), ` #` 뒤는 주석으로 사라짐(경고 없음) → 따옴표. `"#60"`처럼 이슈 번호는 따옴표.
 - 링크될 제목에 ` / `, ` → `, ` - ` 금지(GitLab이 `--`를 `-`로 줄여 앵커가 어긋남).

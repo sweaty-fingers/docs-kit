@@ -1,4 +1,4 @@
-/* Project dashboard interactions (docs-kit hooks/plan.py). Everything here is optional: without it the page shows
+/* Project dashboard interactions (docs-kit site/src/lib/plan.ts). Everything here is optional: without it the page shows
  * both charts, every stage and the full register.
  *
  *   [data-tip]          tooltip on hover / focus (risk ids, axis labels, trends)

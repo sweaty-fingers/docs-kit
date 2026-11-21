@@ -1,9 +1,10 @@
 """docs-kit project settings: which tabs (features) are on, the area list, and the feature catalog.
 
-Shared by the MkDocs hooks (imported from hooks/*.py) and by the host tool bin/kit.py, so it uses the standard library
-only and runs on Python 3.8 (PyYAML is used when present, else a small parser for the file's simple shape).
+Used by the host tool bin/kit.py, so it uses the standard library only and runs on Python 3.8 (PyYAML is used when
+present, else a small parser for the file's simple shape). The site (site/src/config/load.ts) reads the same catalog
+(site/src/config/features.json) and the same file with the same rules.
 
-The project keeps one file at its root, next to mkdocs.yml:
+The project keeps one file at its root:
 
     # docs-kit.yml
     profile: dev              # minimal | app | dev | research | all  (the starting set of tabs)
@@ -17,11 +18,10 @@ The project keeps one file at its root, next to mkdocs.yml:
 With no docs-kit.yml (projects from before 0.15) the profile is `auto`: a tab is on when its folder or data file exists
 in docs/ (ADR always), which is how those projects were built.
 
-A feature that is off is left out completely: its hook does nothing (gate()), its kit pages are built but not put in
-the menu (so links to its templates still work), and project pages in its folder stay published but out of the menu.
+A feature that is off is left out completely: its tab module does nothing, its kit pages are built but not put in the
+menu (so links to its templates still work), and project pages in its folder stay published but out of the menu.
 Turning a feature on again needs no other change: `.docs-kit/bin/kit.py enable <id>` also copies its starter files.
 """
-import functools
 import os
 import re
 
@@ -30,7 +30,7 @@ CONFIG_NAME = "docs-kit.yml"
 
 
 class Feature:
-    """One tab. kind 'hook': a kit hook fills the menu and pages; kind 'nav': plain project pages that hooks/kit.py
+    """One tab. kind 'hook': a tab module fills the menu and pages; kind 'nav': plain project pages that the site
     puts in the menu (no other processing). path: the docs/ folder or file that holds the project's part."""
 
     def __init__(self, fid, title, kind, path, rank, summary, starters=(), recommends=(), data=None):
@@ -39,7 +39,7 @@ class Feature:
         self.data = data or path            # what `auto` looks for in docs/
 
 
-# Menu order = docs-standard §2. rank decides where an auto-added tab goes (hooks/kit_nav.py).
+# Menu order = docs-standard §2. rank decides where an auto-added tab goes (site/src/lib/nav.ts).
 # The catalog lives in site/src/config/features.json so the Astro site and this module read the same list (prd.md
 # FR-CFG-2).
 import json as _json
@@ -116,7 +116,7 @@ def config_path(root):
 
 
 def load(root):
-    """Settings of the project at `root` (the folder with mkdocs.yml). Always returns a dict with profile, features
+    """Settings of the project at `root` (the folder with docs-kit.yml). Always returns a dict with profile, features
     (overrides), areas and `found` (False: no docs-kit.yml, profile auto)."""
     p = config_path(root)
     if not os.path.exists(p):
@@ -143,7 +143,7 @@ def enabled(cfg, fid):
 
 
 def unknown(cfg):
-    """Problems in the settings (shown as build warnings and by bin/kit.py)."""
+    """Problems in the settings (shown by bin/kit.py; the site warns about the same)."""
     out = []
     if cfg["profile"] not in PROFILES and cfg["profile"] != "auto":
         out.append("profile '%s' is not one of %s" % (cfg["profile"], ", ".join(PROFILES)))
@@ -151,80 +151,3 @@ def unknown(cfg):
         if k not in BY_ID:
             out.append("feature '%s' is not one of %s" % (k, ", ".join(BY_ID)))
     return out
-
-
-# ---------------- for the hooks ----------------
-_cache = {}
-nav_state = {"original": set()}   # top-level nav titles as the project wrote them (hooks/kit.py)
-
-
-def root_of(config):
-    return os.path.dirname(os.path.abspath(config["config_file_path"])) if config.get("config_file_path") else os.getcwd()
-
-
-def for_config(config):
-    """Settings for a MkDocs config, read once per build (on_config of hooks/kit.py clears the cache)."""
-    root = root_of(config)
-    if root not in _cache:
-        _cache[root] = load(root)
-    return _cache[root]
-
-
-def reset():
-    _cache.clear()
-
-
-def areas(config):
-    return for_config(config)["areas"]
-
-
-def gate(namespace, fid):
-    """Make the hook module whose globals are `namespace` do nothing while feature `fid` is off: every on_* event
-    returns its first argument unchanged (config, files, markdown, html, ...). Call at the end of the module."""
-    state = {"on": True}
-
-    def wrap(name, fn):
-        @functools.wraps(fn)
-        def inner(*args, **kwargs):
-            if name == "on_config":
-                config = args[0] if args else kwargs.get("config")
-                state["on"] = enabled(for_config(config), fid)
-            if not state["on"]:
-                if args:
-                    return args[0]
-                return next(iter(kwargs.values()), None) if name != "on_post_build" else None
-            return fn(*args, **kwargs)
-        return inner
-
-    has_config = "on_config" in namespace
-    for name in [n for n in list(namespace) if n.startswith("on_") and callable(namespace[n])]:
-        namespace[name] = wrap(name, namespace[name])
-    if not has_config:                           # the state must be set at the start of every build
-        def on_config(config, **kwargs):
-            return config
-        namespace["on_config"] = wrap("on_config", on_config)
-
-
-# ---------------- nav helpers ----------------
-def mentions(nav, path):
-    for item in nav or []:
-        if item == path:
-            return True
-        if isinstance(item, dict):
-            for v in item.values():
-                if v == path or (isinstance(v, list) and mentions(v, path)):
-                    return True
-    return False
-
-
-def title_of(item):
-    if isinstance(item, dict) and item:
-        return next(iter(item))
-    return None
-
-
-_NUM = re.compile(r"(\d+)")
-
-
-def natural(name):
-    return [int(t) if t.isdigit() else t for t in _NUM.split(name)]

@@ -1,4 +1,4 @@
-// Document map viewer (docs-kit hooks/graph.py writes data.js: window.DOCGRAPH = {nodes, kinds, areas}).
+// Document map viewer (docs-kit site/src/lib/graph.ts writes data.js: window.DOCGRAPH = {nodes, kinds, areas}).
 // A force-directed graph on a canvas (charge, links, centre, collision; like d3-force), no library.
 // Hover: a document and its neighbours. Click: the panel (summary, links both ways, front matter relations,
 // similar documents and why). 주변만: only documents within 1-3 steps of the selected one (Obsidian local graph).

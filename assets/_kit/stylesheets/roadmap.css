@@ -1,4 +1,4 @@
-/* Roadmap transit map (hooks/roadmap.py, roadmap/viewer/). Colours follow the page theme (light / dark). */
+/* Roadmap transit map (site/src/lib/roadmap.ts, roadmap/viewer/). Colours follow the page theme (light / dark). */
 .rm-wrap { overflow-x: auto; border: 1px solid var(--md-default-fg-color--lightest); border-radius: 8px;
   background: var(--md-default-bg-color); margin: 0.8em 0 0.4em; }
 .rm-svg, .md-typeset svg.rm-svg { display: block; max-width: none; width: auto; height: auto;

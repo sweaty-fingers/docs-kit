@@ -1,4 +1,4 @@
-/* Project dashboard (hooks/plan.py). Colours follow the page theme; severity uses the status colours with labels. */
+/* Project dashboard (site/src/lib/plan.ts). Colours follow the page theme; severity uses the status colours with labels. */
 .md-typeset .pl-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); gap: 0.6rem; margin: 0.8rem 0; }
 .md-typeset a.pl-card-link, .md-typeset a.pl-card-link:hover { color: inherit; text-decoration: none; }
 .pl-card-link:hover, button.pl-card:hover { border-color: var(--md-accent-fg-color); }
@@ -185,7 +185,7 @@ a[data-tip] { cursor: pointer; }
 .pl-lg-d::before { background: #2a78d6; }
 .md-typeset .pl-table th { white-space: nowrap; }
 
-/* ---- grounding page (hooks/quality.py) ---- */
+/* ---- grounding page (site/src/lib/quality.ts) ---- */
 .q-line { fill: none; stroke-width: 2; }
 .q-false { stroke: #d93025; fill: #d93025; } .q-unv { stroke: #c98500; fill: #c98500; }
 polyline.q-false, polyline.q-unv { fill: none; }
