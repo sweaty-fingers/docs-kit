@@ -57,6 +57,14 @@ const RerunSchema = z
 	})
 	.strict();
 
+// Work memos (memos tab): files in docs/memos/; publish = also put a read-only copy on the built site
+const MemosSchema = z
+	.object({
+		publish: z.boolean().default(false),
+		dir: z.string().default('docs/memos'), // relative to the project root; a git-ignored folder keeps memos out of git
+	})
+	.strict();
+
 const ConfigSchema = z
 	.object({
 		profile: z.string().default('dev'),
@@ -66,6 +74,7 @@ const ConfigSchema = z
 		nav: z.array(z.any()).optional(),
 		links: z.array(LinkSchema).optional(),
 		rerun: RerunSchema.optional(),
+		memos: MemosSchema.optional(),
 	})
 	.strict();
 
@@ -78,6 +87,7 @@ export interface KitConfig {
 	nav: NavSpec[] | null;
 	links: { name: string; to: string; title: string }[];
 	rerun: z.infer<typeof RerunSchema>;
+	memos: z.infer<typeof MemosSchema>;
 	/** Where site / nav / links came from: docs-kit.yml, mkdocs.yml (old projects, FR-CFG-3) or defaults. */
 	siteFrom: 'docs-kit.yml' | 'mkdocs.yml' | 'default';
 }
@@ -170,6 +180,7 @@ export function loadConfig(): KitConfig {
 		nav,
 		links,
 		rerun,
+		memos: parsed.memos ?? MemosSchema.parse({}),
 		siteFrom,
 	};
 	if (raw && !(profile in PROFILES)) warn('kit', 'docs-kit.yml', `profile '${profile}' is not one of ${Object.keys(PROFILES).join(', ')}`);

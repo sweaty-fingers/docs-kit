@@ -127,6 +127,9 @@ const HOOK_NAV: Record<string, (nav: Spec[]) => void> = {
 		const files = ['README.md', 'template.md', ...listDir('publications', NNNN)].map((f) => `publications/${f}`);
 		if (!fillNav(nav, 'publications', '문서함', files)) nav.push({ 문서함: files });
 	},
+	memos(nav) {
+		if (!mentions(nav, 'memos/README.md')) nav.push({ 메모: 'memos/README.md' });
+	},
 	weekly(nav) {
 		const files = ['README.md', 'threads.md', 'template.md', ...listDir('weekly', /^\d{4}-\d{2}-\d{2}\.md$/, true)].map((f) => `weekly/${f}`);
 		if (!fillNav(nav, 'weekly', '주간 보고', files)) nav.push({ '주간 보고': files });
@@ -154,7 +157,7 @@ const HOOK_NAV: Record<string, (nav: Spec[]) => void> = {
 		else nav.push({ '근거 점검': 'quality/README.md' });
 	},
 };
-const HOOK_ORDER = ['adr', 'records', 'experiments', 'arc42', 'publications', 'weekly', 'roadmap', 'graph', 'plan', 'quality'];
+const HOOK_ORDER = ['adr', 'records', 'experiments', 'arc42', 'publications', 'memos', 'weekly', 'roadmap', 'graph', 'plan', 'quality'];
 
 /** kit_nav.py: tabs the kit added go just after the last tab that ranks before them. */
 function reorder(nav: Spec[], original: Set<string>) {

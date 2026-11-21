@@ -112,9 +112,16 @@ def doc_id(path, meta):
 
 def files(root):
     out = []
+    try:  # work memos (memos tab) are material, not evidence: never part of the corpus
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import memos as _memos
+        skip = os.path.normpath(_memos.memo_dir(root))
+    except Exception:  # noqa: BLE001
+        skip = os.path.normpath(os.path.join(root, "docs", "memos"))
     for base in ("docs",):
         for dp, dn, fn in os.walk(os.path.join(root, base)):
-            dn[:] = sorted(d for d in dn if d not in ("assets", "figures") and not d.startswith("."))
+            dn[:] = sorted(d for d in dn if d not in ("assets", "figures") and not d.startswith(".")
+                           and os.path.normpath(os.path.join(dp, d)) != skip)
             for f in sorted(fn):
                 if f.endswith(".md"):
                     out.append(os.path.relpath(os.path.join(dp, f), root).replace(os.sep, "/"))

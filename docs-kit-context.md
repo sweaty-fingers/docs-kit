@@ -4,7 +4,7 @@
 
 > **사이트 엔진은 Astro입니다**(0.16부터 `main`; MkDocs 판은 태그 `v0.15.4`). 이 문서는 Astro 판(1.0) 기준입니다. 엔진을 다시 만든 요구사항은 [prd.md](prd.md), 결정은 [decisions/0001](decisions/0001-astro-engine.md), 이전 검증 결과는 [site/README.md](site/README.md) "M7 verification"입니다. 탭 목록(§5.2~§5.3)의 원천은 `site/src/config/features.json`입니다.
 
-> 기준: docs-kit 1.0.0, 2026-11-21. 키트 동작을 바꾸면 이 문서의 해당 절도 같은 커밋에서 고칩니다(AGENTS-GUIDE §7).
+> 기준: docs-kit 1.1.0, 2026-11-21. 키트 동작을 바꾸면 이 문서의 해당 절도 같은 커밋에서 고칩니다(AGENTS-GUIDE §7).
 
 - **저장소가 있으면 저장소가 정본**입니다. 이 문서와 코드가 다르면 코드를 믿고 이 문서를 고칩니다.
 - **저장소를 가져갈 수 있으면** 복제가 가장 확실합니다(`git clone`, 또는 `git bundle create docs-kit.bundle --all`로 파일 하나로 옮김). 이 명세는 가져갈 수 없을 때 다시 만드는 기준이고, 순서는 §12입니다.
@@ -62,7 +62,8 @@ docs-kit/
     src/config/                   # paths.ts(키트·프로젝트·출력 경로), load.ts(docs-kit.yml + zod), features.json(탭·묶음)
     src/markdown/                 # pre.ts(원본 단계: admonition·details·탭·끼워 넣기·md_in_html·목록·표시 줄), pipeline.ts(unified)
     src/lib/                      # site.ts(읽기·겹치기·렌더·캐시), links.ts(§ 링크·검사), nav.ts(메뉴), markers.ts, warnings.ts,
-                                  # records.ts(ADR·C4·VR·EXP·arc42·P), weekly.ts, roadmap.ts, plan.ts, graph.ts, quality.ts
+                                  # records.ts(ADR·C4·VR·EXP·arc42·P), weekly.ts, roadmap.ts, plan.ts, graph.ts, quality.ts,
+                                  # memos.ts(메모 파일 읽기·쓰기, 미리보기 서버의 메모 API)
     src/layouts/Page.astro        # 머리줄, 탭 줄, 옆 메뉴, 본문, 이 페이지, 앞뒤, 서랍 메뉴, 검색
     src/pages/                    # [...slug].astro(모든 쪽), r/[name].astro(짧은 주소), 404.astro, 뷰어 데이터:
                                   # adr/viewer/data.json.ts, roadmap/viewer/data.js.ts, plan/board/data.js.ts, graph/viewer/data.js.ts
@@ -75,6 +76,7 @@ docs-kit/
     _kit/stylesheets/{roadmap,plan}.css  _kit/javascripts/plan.js   # 현황판·로드맵 쪽 (md-typeset 호환 층으로 씀)
     adr/{README,log,c4,guide,template}.md  adr/viewer/{index.html,viewer.js,viewer.css}
     arc42/ publications/ experiments/ records/ weekly/ roadmap/ graph/ plan/ quality/   # 탭 페이지, 뷰어, 보드
+    memos/{README.md,app/{index.html,app.js,app.css}}                                 # 메모 탭: 안내 쪽과 메모 앱
   docker/{Dockerfile,run.sh}      # Docker 실행 방식의 이미지
   template/
     base/{docs-kit.yml,docs/README.md}
@@ -83,7 +85,7 @@ docs-kit/
   tests/fixtures/all/             # selftest 고정 입력 (docs/ 아래 그대로, README.append.md)
   tests/site-diff-allow.txt       # MkDocs 판과 비교할 때 받아들인 차이
   bin/
-    kit.py kitconf.py(탭 목록·docs-kit.yml 읽기) init.sh docs.sh selftest.sh site_diff.py compare_editions.sh
+    kit.py kitconf.py(탭 목록·docs-kit.yml 읽기) init.sh docs.sh selftest.sh site_diff.py compare_editions.sh memos.py
     docs_search.py docs_check.py docs_ask.py serve.sh plan_board.py repro.sh weekly_draft.py
 ```
 
@@ -159,6 +161,7 @@ areas:                    # ADR·VR·EXP 머리말 area 값 (id: 이름). 없으
 | --- | --- | --- | --- | --- | --- |
 | `history` | 작업 내역 | nav | `history.md` | `docs/history.md` | |
 | `plan` | 현황판 | 탭 모듈 | `plan` (`plan/scope.yml`) | `docs/plan/{scope.yml,risks.yml,sprints.json}` | roadmap |
+| `memos` | 메모 | 탭 모듈 | `memos` (`docs-kit.yml memos.dir`) | (없음: 앱이 만듦) | weekly |
 | `weekly` | 주간 보고 | 탭 모듈 | `weekly` | (없음: `weekly_draft.py --write`) | |
 | `roadmap` | 로드맵 | 탭 모듈 | `roadmap` (`roadmap/roadmap.yml`) | `docs/roadmap/roadmap.yml` | |
 | `graph` | 문서 지도 | 탭 모듈 | `graph` | (없음) | |
@@ -183,8 +186,8 @@ arc42 섹션 파일 이름: a01_goals, a02_constraints, a03_context, a04_solutio
 | --- | --- |
 | `minimal` | adr, guides, glossary |
 | `app` | adr, roadmap, guides, reference, history, glossary |
-| `dev` | history, plan, weekly, roadmap, graph, quality, publications, arc42, adr, records, guides, reference, shared, glossary |
-| `research` | history, plan, weekly, roadmap, graph, quality, publications, adr, experiments, records, models, guides, background, glossary |
+| `dev` | history, plan, memos, weekly, roadmap, graph, quality, publications, arc42, adr, records, guides, reference, shared, glossary |
+| `research` | history, plan, memos, weekly, roadmap, graph, quality, publications, adr, experiments, records, models, guides, background, glossary |
 | `all` | 모두 |
 
 ### 5.4 `bin/kit.py`
@@ -252,7 +255,7 @@ arc42 섹션 파일 이름: a01_goals, a02_constraints, a03_context, a04_solutio
 - 메뉴: README(목록 `<!-- weekly-index -->`: 날짜, 기간, 상태, 업무), threads(업무별 흐름 `<!-- weekly-threads -->`: 업무마다 보고들의 한 일·결과·막힌 것 최신순), template, 보고들(최신순). 탭을 켜면 보고가 없어도 탭이 보임.
 - 보고 페이지 안의 `#12`, `!27`, `VR-0004`·`ADR-0011`·`EXP-0001`·`P-0001`은 자동 링크(코드·제목·기존 링크 제외). 카드: 기간, 상태, 작성, 회의, 커밋, 앞뒤 보고.
 - 검사: 머리말, 파일 이름 = 날짜, 제목, `from` = 지난 보고 날짜, 발행인데 commit 없음, 업무 절의 빠진 항목.
-- 재료 도구 `bin/weekly_draft.py [--since D] [--until D] [--branch B] [--write]`: 지난 보고의 "다음"·회의 메모, 이슈 스냅숏(`meeting` 라벨, 마일스톤별 닫힘·새로 열림·계속 열림), 커밋, 새 문서(VR, ADR, EXP, P, G, R, 배경), 작업 내역 줄 → `build/weekly/<날짜>_material.md`. `--write`는 로드맵 units + 마일스톤을 업무로 한 뼈대.
+- 재료 도구 `bin/weekly_draft.py [--since D] [--until D] [--branch B] [--write] [--memos 선택…]`. `--memos`(사용자가 고른 메모: 번호·`tag:`·`work:`·`since:`/`until:`)면 재료는 그 메모를 업무별로 모은 것 + 지난 보고의 "다음"·회의 메모뿐이고(커밋·이슈·작업 내역은 모으지 않음, 메모 날짜는 기간 밖이어도 됨), 뼈대의 업무 절은 메모의 업무, 머리말 `memos: [번호…]`(빌드가 없는 메모를 경고, 카드에 "참고한 메모"). `--memos`가 없으면: 지난 보고의 "다음"·회의 메모, 이슈 스냅숏(`meeting` 라벨, 마일스톤별 닫힘·새로 열림·계속 열림), 커밋, 새 문서(VR, ADR, EXP, P, G, R, 배경), 작업 내역 줄 → `build/weekly/<날짜>_material.md`. `--write`는 로드맵 units + 마일스톤을 업무로 한 뼈대.
 
 ### 6.7 로드맵 (`roadmap`)
 
@@ -298,6 +301,16 @@ arc42 섹션 파일 이름: a01_goals, a02_constraints, a03_context, a04_solutio
 
 탭 모듈 없이 메뉴만 만듭니다(§4.3). 형식은 규격: 실행 가이드 `gN_*.md` `# G<N>.`, 맨 위 `> 기준: 날짜 + 마지막 검증 VR`, 단계마다 명령 → 기대 결과 → 안 될 때. 참고 `rN_*.md` `# R<N>.` 값의 표. 배경 `NN_*.md` `# NN.`(두 자리 번호는 배경에만). 작업 내역 `docs/history.md` 최신순 표(날짜, 업무, 내용, 결과, 재현·실행, 자세히). 공용 파일은 짧게(이름·버전·내용물·받기·경로). 모델 카드 형식은 첫 승격 때 정함.
 
+
+### 6.12 메모 (`memos`)
+
+- 파일: 메모 하나 = `<memos.dir>/<번호>.md`(기본 `docs/memos/`, 번호 = 쓴 시각 `YYYYMMDD-HHMMSS`, 겹치면 `-2`). 머리말 값은 JSON으로 씀(YAML로도 읽힘): `title`(비면 본문 첫 줄), `created`, `updated`(시간대 포함), `work`(업무), `tags`(목록, `/`로 나누면 묶임), `pinned`, `archived`, `trashed`(휴지통에 넣은 시각, 비면 아님). 본문은 Markdown.
+- 사이트: 메모 파일은 페이지·정적 파일·검색 색인·문서 지도에 들어가지 않음. 탭 쪽 `memos/README.md`(키트)가 앱을 끼워 넣음. 빌드는 `memos/app/data.json`을 씀: 기본 `{"published": false, "memos": []}`, `memos.publish: true`면 휴지통 밖 메모의 읽기 전용 사본.
+- 앱 `memos/app/`(독립, 의존성 없음): 왼쪽(모든 메모 · 고정 · 오늘 · 최근 7일 · 업무 미지정 · 보관함 · 휴지통, 업무별, 태그 나무), 가운데(찾기 — 보관한 메모도, 작성일 범위, 정렬, 빠른 메모: Enter로 만들고 `#낱말`은 태그, 목록 체크로 여러 개 고르기), 오른쪽(제목, 업무 — 로드맵 업무와 지난 보고 업무 이름 제안, 태그, 서식 단추, 미리보기 — 체크 칸 누르기, 목록 이어 쓰기). 쓰는 대로 저장(0.7초 뒤, 실패하면 브라우저에 보관 후 다시), 다른 곳에서 파일이 바뀌면 충돌 막대(바뀐 것 불러오기 / 내 것으로 덮어쓰기), 창에 돌아오거나 20초마다 다시 읽음, 비운 새 메모는 남기지 않음, "오늘 메모"(`YYYY-MM-DD 업무 일지`, 태그 `일지`), "에이전트에게 넘기기"(주간 보고 / 다른 문서 요청 글 복사), 밝음·어두움(끼워 넣으면 쪽 테마), 휴대폰은 목록 ↔ 편집 한 칸씩. 주소 `#memo=<번호>`.
+- 미리보기 서버의 API(`site/src/lib/memos.ts`, 빌드한 사이트에는 없음): `GET /_kit/api/memos`(메모와 업무 제안), `POST`(만들기), `PUT /<번호>`(읽은 때의 `base` mtime이 다르면 409와 지금 파일, `force`면 덮어씀), `DELETE /<번호>`(휴지통의 메모만), `POST /empty-trash`. 요청은 `localhost`/`127.0.0.1`로 연 쪽에서 같은 출처만(다른 PC에서 IP로 연 미리보기는 403), 본문은 JSON만, 1 MB까지. 메모 저장은 열린 쪽을 다시 그리지 않음.
+- 도구 `bin/memos.py list [--work W] [--tag T]… [--since D] [--until D] [-q 낱말] [--archived] [--trash] [--json]`, `show <선택…> [--json]`(선택: 번호 또는 그 앞부분, `tag:`, `work:`, `since:`, `until:`; 휴지통은 빠짐). 읽기만 함.
+- 문서 검색(`docs_search.py`)과 근거 점검은 메모 폴더를 읽지 않음(메모는 근거가 아님).
+
 ---
 
 ## 7. 공통 기능
@@ -327,6 +340,7 @@ arc42 섹션 파일 이름: a01_goals, a02_constraints, a03_context, a04_solutio
 | `site_diff.py OLD NEW [--allow F] [--json]` | 호스트 | 빌드한 두 사이트의 쪽 목록·제목·절 앵커·링크 대상 비교(MIG-4) |
 | `compare_editions.sh [프로젝트]` | 호스트 | 같은 문서를 MkDocs 판(v0.15.4)과 지금 판으로 빌드해 비교(§11) |
 | `docs_search.py`, `docs_check.py`, `docs_ask.py` | 호스트 | §6.10. 모델 서버는 127.0.0.1만 부름 |
+| `memos.py list\|show` | 호스트 | §6.12 |
 | `serve.sh board\|ask start\|stop\|status\|logs` | 호스트 | 배경 서버, `build/serve/<이름>.{pid,log}`, `DOCS_DEV_PORT`(8001), `BOARD_PORT`(8002), `DOCS_ASK_PORT`(8003), `DOCS_ASK_PRESTART`(모델 서버 시작 명령) |
 | `plan_board.py --root R [--port 8002] [--from-ports 8001]` | 호스트 | `POST /api/sprints` → 검사 → 백업 → `docs/plan/sprints.json` |
 | `repro.sh VR-NNNN [args]` | 호스트 | §6.5 |

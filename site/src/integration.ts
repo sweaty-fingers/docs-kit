@@ -9,6 +9,9 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { ASSETS_DIR, CONFIG_FILE, DOCS_DIR, MKDOCS_FILE } from './config/paths.ts';
 import { enabled, loadConfig } from './config/load.ts';
+import { memoApi, memoDir } from './lib/memos.ts';
+import { workNames } from './lib/weekly.ts';
+import { loadRoadmap } from './lib/roadmap.ts';
 import { scanFiles, scanPages } from './lib/site.ts';
 import { clearWarningFile, readWarnings, resetWarnings } from './lib/warnings.ts';
 
@@ -77,6 +80,9 @@ export default function kit(): AstroIntegration {
 				const inProject = (f: string) => watched.some((w) => f === w || f.startsWith(w + path.sep));
 				const reload = (f: string) => {
 					if (!inProject(f)) return;
+					// memo saves (the memo app's autosave) must not reload every open page
+					const md = memoDir();
+					if (f === md || f.startsWith(md + path.sep)) return;
 					resetWarnings();
 					// page list may have changed: drop Astro's cached getStaticPaths results for the page routes
 					for (const mod of server.moduleGraph.idToModuleMap.values())
@@ -86,12 +92,25 @@ export default function kit(): AstroIntegration {
 				server.watcher.on('change', reload);
 				server.watcher.on('add', reload);
 				server.watcher.on('unlink', reload);
+				// the memo app's API: only in the preview server (the built site is static and has none)
+				// Vite strips the site base from req.url before these run; originalUrl keeps it
+				const fullUrl = (req: any) => String(req.originalUrl ?? req.url ?? '').split('?')[0];
 				server.middlewares.use((req, res, next) => {
-					const url = decodeURIComponent((req.url || '').split('?')[0]);
+					const url = fullUrl(req);
+					if (!url.startsWith(base + '_kit/api/')) return next();
+					const suggest = () => {
+						const cfg = loadConfig();
+						const units = [...(loadRoadmap(cfg)?.units.values() ?? [])].map((u) => u.name);
+						return [...new Set([...units, ...(enabled(cfg, 'weekly') ? workNames() : [])])];
+					};
+					memoApi(req, res, decodeURIComponent(url.slice(base.length)), suggest).then((done) => done || next(), next);
+				});
+				server.middlewares.use((req, res, next) => {
+					const url = decodeURIComponent(fullUrl(req));
 					if (!url.startsWith(base)) return next();
 					const rel = url.slice(base.length);
 					if (!rel || rel.endsWith('.md')) return next();
-					const file = staticFiles().get(rel) ?? (rel.endsWith('/') ? undefined : staticFiles().get(rel + '/index.html'));
+					const file = staticFiles().get(rel) ?? staticFiles().get(rel.endsWith('/') ? rel + 'index.html' : rel + '/index.html');
 					if (!file || !fs.existsSync(file)) return next();
 					res.setHeader('Content-Type', TYPES[path.extname(file).toLowerCase()] ?? 'application/octet-stream');
 					res.setHeader('Cache-Control', 'no-cache');
@@ -128,6 +147,7 @@ export default function kit(): AstroIntegration {
 						'roadmap/viewer/data.js': enabled(c, 'roadmap') && has('roadmap/roadmap.yml'),
 						'plan/board/data.js': enabled(c, 'plan') && has('plan/scope.yml'),
 						'graph/viewer/data.js': enabled(c, 'graph'),
+						'memos/app/data.json': enabled(c, 'memos'),
 					};
 					for (const [rel, on] of Object.entries(keep)) if (!on) fs.rmSync(path.join(out, rel), { force: true });
 				}

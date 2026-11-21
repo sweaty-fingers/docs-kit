@@ -102,3 +102,16 @@ test('heading ids: GitHub-style slugs, repeats get _1 / _2 like the MkDocs editi
 	const r = await renderMarkdown('## 개념\n\n## 장점\n\n## 개념\n\n## 개념\n\n## A B. c\n');
 	assert.deepEqual(r.headings.map((x) => x.id), ['개념', '장점', '개념_1', '개념_2', 'a-b-c']);
 });
+
+test('memos: a memo file round-trips; tags are cleaned; the title falls back to the first line', async () => {
+	const { parseMemo, serializeMemo, cleanTags } = await import('../src/lib/memos.ts');
+	const m = parseMemo('20261121-153012', '---\ntitle: ""\ncreated: "2026-11-21T15:30:12+09:00"\nwork: "업무"\ntags: [회의, "#실험", " a / b "]\npinned: true\n---\n\n# 첫 줄 제목\n본문\n', 0);
+	assert.equal(m.title, '첫 줄 제목');
+	assert.deepEqual(m.tags, ['회의', '실험', 'a/b']);
+	assert.equal(m.pinned, true);
+	assert.equal(m.updated, m.created);
+	const again = parseMemo(m.id, serializeMemo({ ...m, title: '제목 "따옴표"' }), 0);
+	assert.equal(again.title, '제목 "따옴표"');
+	assert.equal(again.body, m.body);
+	assert.deepEqual(cleanTags('a, #b, a'), ['a', 'b']);
+});

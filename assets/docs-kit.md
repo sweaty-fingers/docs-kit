@@ -146,6 +146,7 @@ docs-kit은 모든 탭(현황판, 주간 보고, 로드맵, 문서 지도, 근�
 | `.docs-kit/bin/serve.sh board start` | 스프린트 보드 저장 서버(개발 미리보기에서 연 보드만 저장) |
 | `.docs-kit/bin/serve.sh ask start` | 문서 지도의 질문 서버(로컬 생성 모델 `DOCS_LLM_URL`, 임베딩 `DOCS_EMBED_URL`은 프로젝트가 띄움) |
 | `.docs-kit/bin/repro.sh VR-NNNN` | 검증 기록의 재현 스크립트를 새 폴더에서 돌리고 기록 값과 비교 |
-| `.docs-kit/bin/weekly_draft.py --write` | 지난 보고 이후의 재료(지난 '다음', 이슈 스냅숏, 커밋, 새 문서, 작업 내역)와 이번 보고 뼈대 |
+| `.docs-kit/bin/weekly_draft.py --write` | 지난 보고 이후의 재료(지난 '다음', 이슈 스냅숏, 커밋, 새 문서, 작업 내역)와 이번 보고 뼈대. `--memos <번호…>`면 고른 메모만 재료로 |
+| `.docs-kit/bin/memos.py list` / `show <번호…>` | 메모 찾기(업무·태그·기간·낱말)와 읽기. 메모는 메뉴 "메모"의 앱에서 씀(이 컴퓨터의 미리보기에서만 저장) |
 
 포트 기본값: 공유 사이트 8000, 개발 미리보기 8001, 보드 저장 8002, 질문 서버 8003. 프로젝트가 바꾸면 참고 문서(포트 표)에 적습니다.

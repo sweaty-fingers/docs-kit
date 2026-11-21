@@ -183,6 +183,37 @@ print(" ".join(k for k, v in checks.items() if not v))
 PY
 )"
 [[ -z "$m6" ]] || fail "map / grounding tabs not as expected: $m6"
+# memos tab: memo files are not published (pages, files, search), the app and its data stub are; tools read them
+memo="$(python3 - "$S" "$P" <<'PY'
+import json, os, sys
+S, P = sys.argv[1], sys.argv[2]
+def art(p):
+    h = open(f"{S}/{p}", encoding="utf-8").read()
+    return h[h.find("<article"):h.find("</article>")]
+built = [os.path.join(dp, f) for dp, dn, fn in os.walk(S) for f in fn]
+checks = {
+    "memo page embeds the app": "app/index.html?embed=1" in art("memos/index.html"),
+    "app files": all(os.path.exists(f"{S}/memos/app/{f}") for f in ("index.html", "app.js", "app.css")),
+    "data stub": json.load(open(f"{S}/memos/app/data.json", encoding="utf-8")) == {"published": False, "memos": []},
+    "memo files not published": not any("20260108-093000" in p for p in built),
+    "memos not in search": "20260108" not in open(f"{S}/_kit/pagefind/pagefind-entry.json", encoding="utf-8").read(),
+    "weekly card lists memos": "참고한 메모" in art("weekly/2026-01-12.html") and "20260110-090000" in art("weekly/2026-01-12.html"),
+}
+print(" ".join(k for k, v in checks.items() if not v))
+PY
+)"
+[[ -z "$memo" ]] || fail "memos tab not as expected: $memo"
+ml="$(DOCS_ROOT="$P" python3 "$KIT/bin/memos.py" list)"
+grep -q '^20260110-090000\*' <<<"$ml" && grep -q '^20260108-093000 ' <<<"$ml" && ! grep -q '20260111' <<<"$ml" \
+  || fail "memos.py list: expected the 2 live memos (pinned first), not the archived / trashed ones"$'\n'"$ml"
+ms="$(DOCS_ROOT="$P" python3 "$KIT/bin/memos.py" show work:"시험 업무" since:2026-01-09 | grep -c '^## ' || true)"
+[[ "$ms" == 1 ]] || fail "memos.py show work: + since: expected 1 memo, got $ms"
+(cd "$P" && DOCS_ROOT="$P" python3 "$KIT/bin/weekly_draft.py" --memos 20260108-093000 tag:회의 --until 2026-01-19 --write >/dev/null) \
+  || fail "weekly_draft.py --memos failed"
+grep -q '^memos: \["20260108-093000", "20260110-090000"\]$' "$P/docs/weekly/2026-01-19.md" 2>/dev/null \
+  && grep -q '^### 3.1 시험 업무$' "$P/docs/weekly/2026-01-19.md" && grep -q '^#### 20260110-090000 회의 메모$' "$P/build/weekly/2026-01-19_material.md" \
+  && ! grep -q '^## 커밋' "$P/build/weekly/2026-01-19_material.md" \
+  || fail "weekly_draft.py --memos: skeleton memos: / work items or the memo material not as expected"
 # ---- 4. ask (bin/docs_ask.py): the per-sentence citation check (host Python, no model needed)
 ask="$(python3 - "$KIT/bin" <<'PY'
 import sys; sys.path.insert(0, sys.argv[1]); import docs_ask as a

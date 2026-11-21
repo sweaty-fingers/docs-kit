@@ -10,6 +10,7 @@ import { DOCS_DIR } from '../config/paths.ts';
 import { enabled, type KitConfig } from '../config/load.ts';
 import { escapeHtml as esc, splitFrontMatter, type MarkerHandler } from '../markdown/pre.ts';
 import { warn } from './warnings.ts';
+import { listMemos, memoDir } from './memos.ts';
 
 const STATUS: Record<string, [string, string]> = { draft: ['작성 중', 'running'], published: ['발행', 'done'] };
 const BULLETS = ['배경', '한 일', '결과', '다음'];
@@ -98,6 +99,13 @@ function load() {
 		if (!t) warn('weekly', where, `first heading must be '# ${date} 주간 보고'`);
 		else if (t[1] !== date) warn('weekly', where, `title date ${t[1]} does not match the file name`);
 		if (!/^##\s+.*업무별 진행/m.test(body)) warn('weekly', where, "no '## 3. 업무별 진행' section");
+		// memos the report was written from (weekly_draft.py --memos): each must be a memo that exists
+		if (meta.memos !== undefined && meta.memos !== null) {
+			meta.memos = (Array.isArray(meta.memos) ? meta.memos : [meta.memos]).map(String);
+			const have = new Set(listMemos(memoDir()).map((m) => m.id));
+			const missing = meta.memos.filter((id: string) => !have.has(id));
+			if (missing.length) warn('weekly', where, `memos: no memo ${missing.join(', ')} in ${path.relative(path.dirname(DOCS_DIR), memoDir())}`);
+		}
 		reports.set(date, { date, file: where, meta, prev, next: i > 0 ? names[i - 1].slice(0, -3) : null, work: workItems(body, where) });
 	});
 	const docFiles = new Map<string, string>();
@@ -198,6 +206,8 @@ export function weeklyPage(cfg: KitConfig, page: { rel: string }, md: string): s
 	];
 	if (r.meta.meeting) rows.push(['회의', esc(r.meta.meeting)]);
 	if (r.meta.commit) rows.push(['기준 커밋', `<code>${esc(r.meta.commit)}</code>`]);
+	if (Array.isArray(r.meta.memos) && r.meta.memos.length)
+		rows.push(['참고한 메모', `${r.meta.memos.length}개 ${r.meta.memos.map((id: string) => `<code>${esc(id)}</code>`).join(' ')}`]);
 	const nav: string[] = [];
 	if (r.prev) nav.push(`<a href="${r.prev}.html">← ${r.prev}</a>`);
 	if (r.next) nav.push(`<a href="${r.next}.html">${r.next} →</a>`);
@@ -206,4 +216,11 @@ export function weeklyPage(cfg: KitConfig, page: { rel: string }, md: string): s
 	const card = `<dl class="kit-card exp-meta">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
 	const linked = linkRefs(md, cfg, docFiles, 'weekly');
 	return linked.replace(/^(#\s.+)$/m, (h) => `${h}\n\n${card}\n`);
+}
+
+/** Work item names used in the weekly reports, newest report first (offered as 업무 in the memo app). */
+export function workNames(): string[] {
+	const names: string[] = [];
+	for (const r of load().reports.values()) for (const w of r.work) if (!names.includes(w.name)) names.push(w.name);
+	return names;
 }

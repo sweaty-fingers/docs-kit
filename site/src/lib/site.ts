@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import { ASSETS_DIR, DOCS_DIR } from '../config/paths.ts';
+import { memoDir } from './memos.ts';
 import { BY_ID, enabled, FEATURES, loadConfig, type Feature, type KitConfig } from '../config/load.ts';
 import { blocks, fixLists, markers, mdInHtml, snippets, splitFrontMatter, eachLine } from '../markdown/pre.ts';
 import { renderMarkdown, type Heading } from '../markdown/pipeline.ts';
@@ -51,13 +52,19 @@ function walk(dir: string, base = ''): string[] {
 	return out;
 }
 
-/** Every file of the site: kit assets (minus the MkDocs-only _kit/) under the project's docs/. */
+/** Every file of the site: the kit's assets/ under the project's docs/. Work memos (memos tab) are never pages or
+ *  published files: they are read by the memo app (preview API) and by agents (bin/memos.py). */
 export function scanFiles(): Map<string, SourceFile> {
 	const files = new Map<string, SourceFile>();
 	for (const rel of walk(ASSETS_DIR)) {
 		files.set(rel, { rel, abs: path.join(ASSETS_DIR, rel), origin: 'kit' });
 	}
-	for (const rel of walk(DOCS_DIR)) files.set(rel, { rel, abs: path.join(DOCS_DIR, rel), origin: 'project' });
+	const md = path.relative(DOCS_DIR, memoDir());
+	const memoRel = md && !md.startsWith('..') && !path.isAbsolute(md) ? md.split(path.sep).join('/') + '/' : null;
+	for (const rel of walk(DOCS_DIR)) {
+		if (memoRel && rel.startsWith(memoRel) && !/^(README|index)\.md$/.test(rel.slice(memoRel.length))) continue;
+		files.set(rel, { rel, abs: path.join(DOCS_DIR, rel), origin: 'project' });
+	}
 	for (const [rel, text] of generatedPages(loadConfig())) if (!files.has(rel)) files.set(rel, { rel, abs: '', origin: 'kit', text });
 	return files;
 }
@@ -204,7 +211,7 @@ function fingerprint(files: Map<string, SourceFile>): string {
 export async function getSite(): Promise<Site> {
 	const cfg = loadConfig();
 	const files = scanFiles();
-	const cfgKey = JSON.stringify([cfg.profile, cfg.features, cfg.areas, cfg.site, cfg.links, cfg.rerun]);
+	const cfgKey = JSON.stringify([cfg.profile, cfg.features, cfg.areas, cfg.site, cfg.links, cfg.rerun, cfg.memos]);
 	const key = fingerprint(files) + '|' + cfgKey;
 	if (current && current.key === key) return current.site;
 	const list = scanPages();

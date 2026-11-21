@@ -5,8 +5,15 @@
     .docs-kit/bin/weekly_draft.py --since 2026-01-05    first report: from the project start
     .docs-kit/bin/weekly_draft.py --write               also create docs/weekly/<today>.md (skeleton; never overwrites)
     .docs-kit/bin/weekly_draft.py --branch origin/main  the branch whose commits count (default: origin/main, else HEAD)
+    .docs-kit/bin/weekly_draft.py --memos 20261121-153012 work:"업무" tag:회의   material from these memos only (memos tab)
 
-Collected (the agent writes the report from this; the person edits it):
+With --memos (the memos the person chose, bin/memos.py selectors) the material is those memos grouped by 업무, plus the
+previous report's 다음 and 회의 메모; commits, issues and history are not collected, and the memos' dates do not have to
+fall in the report's period. The skeleton (--write) then has one work item per 업무 of the memos and lists the memos in
+its front matter (`memos:`). Without --memos (or when the person asks the agent to work it out), the material is:
+
+
+Collected without --memos (the agent writes the report from this; the person edits it):
   - the previous report's 다음 bullets per work item and its 회의 메모
   - issues from the tracker snapshot docs/plan/issues.json, by milestone (= work item): closed / opened in the period,
     still open, and issues labelled `meeting`. The snapshot is the project's own export (e.g. a GitLab or GitHub script):
@@ -24,6 +31,9 @@ import os
 import re
 import subprocess
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import memos as memolib  # noqa: E402
 
 KIT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROOT = os.path.abspath(os.environ.get("DOCS_ROOT") or os.path.dirname(KIT))
@@ -93,8 +103,12 @@ def main():
     p.add_argument("--until", default=datetime.date.today().isoformat())
     p.add_argument("--branch", help="branch whose commits count (default: origin/main if it exists, else HEAD)")
     p.add_argument("--write", action="store_true", help="create docs/weekly/<until>.md as a skeleton")
+    p.add_argument("--memos", nargs="+", metavar="SEL",
+                   help="write the report from these memos only (ids, tag:<태그>, work:<업무>, since:/until:<날짜>; bin/memos.py)")
     a = p.parse_args()
     prev = [d for d in reports() if d < a.until]
+    if a.memos:
+        return from_memos(a, prev)
     since = a.since or (prev[-1] if prev else None)
     if not since:
         sys.exit("no previous report: give --since <project start date>")
@@ -153,23 +167,61 @@ def main():
     print(f"material: {os.path.relpath(path, ROOT)} ({len(log.splitlines())} commits)")
 
     if a.write:
-        dest = os.path.join(WEEKLY, a.until + ".md")
-        if os.path.exists(dest):
-            print(f"keep: {os.path.relpath(dest, ROOT)} exists")
-            return
         names = [g for g in groups if g != "(마일스톤 없음)"] + ["그 밖"]
-        work = "\n\n".join(f"### 3.{n} {g}\n\n- **배경**: \n- **한 일**: \n- **결과**: \n- **다음**: "
-                           for n, g in enumerate(names, 1))
-        who = git("config", "user.name").strip() or "<이름>"
-        body = (f"---\ndate: {a.until}\nfrom: {since}\nstatus: draft\nby: [{who}]\n---\n\n# {a.until} 주간 보고\n\n"
-                "## 1. 요약\n\n| 구분 | 내용 | 자세히 |\n| --- | --- | --- |\n| 막힌 것 | | |\n| 정할 것 | | §4 |\n\n"
-                "## 2. 지난 회의 요청사항\n\n| 요청 | 이슈 | 상태 | 다룬 곳 |\n| --- | --- | --- | --- |\n\n"
-                f"## 3. 업무별 진행\n\n{work}\n\n## 4. 정할 것과 도움 필요\n\n없음\n\n## 5. 회의 메모\n\n")
-        os.makedirs(WEEKLY, exist_ok=True)
-        with open(dest, "w", encoding="utf-8") as f:
-            f.write(body)
-        print(f"created: {os.path.relpath(dest, ROOT)} (skeleton; fill it from the material)")
+        skeleton(a.until, since, names, [])
 
+
+def from_memos(a, prev):
+    """Material and skeleton from the memos the person chose (--memos)."""
+    picked = memolib.select(memolib.load(ROOT), a.memos)
+    if not picked:
+        sys.exit("no memos selected (see .docs-kit/bin/memos.py list)")
+    since = a.since or (prev[-1] if prev else min(m["created"][:10] for m in picked))
+    out = [f"# 주간 보고 재료: 고른 메모 {len(picked)}개 (보고 {a.until})", "",
+           "메모로 쓰는 보고: 이 메모에 적힌 일만 씁니다. 그 기간의 커밋·이슈·작업 내역은 모으지 않았습니다.",
+           f"이전 보고: docs/weekly/{prev[-1]}.md" if prev else "이전 보고: 없음 (첫 보고)",
+           "참고한 메모: " + " ".join(m["id"] for m in picked), ""]
+    if prev:
+        nxt, memo = previous_report(prev[-1])
+        out += ["## 지난 보고의 '다음'", ""] + (nxt or ["(없음)"]) + ["", "## 지난 보고의 회의 메모", ""] + (memo or ["(없음)"]) + [""]
+    order = units()
+    works = []
+    for m in picked:
+        w = m["work"] or "(업무 미지정)"
+        if w not in works:
+            works.append(w)
+    works.sort(key=lambda w: (w == "(업무 미지정)", order.index(w) if w in order else len(order)))
+    out += ["## 업무별 메모", ""]
+    for w in works:
+        out += [f"### {w}", ""] + [memolib.as_text(m, 4) for m in picked if (m["work"] or "(업무 미지정)") == w]
+    os.makedirs(os.path.join(ROOT, "build", "weekly"), exist_ok=True)
+    path = os.path.join(ROOT, "build", "weekly", f"{a.until}_material.md")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("\n".join(out) + "\n")
+    print(f"material: {os.path.relpath(path, ROOT)} ({len(picked)} memos, {len(works)} work items)")
+    if a.write:
+        names = [w for w in works if w != "(업무 미지정)"] + (["그 밖"] if "(업무 미지정)" in works else [])
+        skeleton(a.until, since, names, [m["id"] for m in picked])
+
+
+def skeleton(date, since, names, memo_ids):
+    """docs/weekly/<date>.md with one work item per name (never overwrites)."""
+    dest = os.path.join(WEEKLY, date + ".md")
+    if os.path.exists(dest):
+        print(f"keep: {os.path.relpath(dest, ROOT)} exists")
+        return
+    work = "\n\n".join(f"### 3.{n} {g}\n\n- **배경**: \n- **한 일**: \n- **결과**: \n- **다음**: "
+                       for n, g in enumerate(names, 1))
+    who = git("config", "user.name").strip() or "<이름>"
+    memos_line = f"memos: {json.dumps(memo_ids)}\n" if memo_ids else ""
+    body = (f"---\ndate: {date}\nfrom: {since}\nstatus: draft\nby: [{who}]\n{memos_line}---\n\n# {date} 주간 보고\n\n"
+            "## 1. 요약\n\n| 구분 | 내용 | 자세히 |\n| --- | --- | --- |\n| 막힌 것 | | |\n| 정할 것 | | §4 |\n\n"
+            "## 2. 지난 회의 요청사항\n\n| 요청 | 이슈 | 상태 | 다룬 곳 |\n| --- | --- | --- | --- |\n\n"
+            f"## 3. 업무별 진행\n\n{work}\n\n## 4. 정할 것과 도움 필요\n\n없음\n\n## 5. 회의 메모\n\n")
+    os.makedirs(WEEKLY, exist_ok=True)
+    with open(dest, "w", encoding="utf-8") as f:
+        f.write(body)
+    print(f"created: {os.path.relpath(dest, ROOT)} (skeleton; fill it from the material)")
 
 if __name__ == "__main__":
     main()

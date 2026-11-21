@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.1.0 — 2026-11-21
+
+New tab `memos` (메모): work memos people write directly, which agents use as material for weekly reports and other
+documents. No change to existing formats (one optional front-matter field on weekly reports).
+
+- Memo app `memos/app/` (no dependencies): three panes like Apple Notes / Bear (views: all, pinned, today, last 7 days,
+  no 업무, archive, trash; 업무; nested tags), quick capture with `#tags` (Keep), today's work log (daily note), Markdown
+  with a preview and clickable checklists, autosave with a local copy while a save fails, conflict handling when the
+  file changed elsewhere, search (archived memos too), date range and sort, bulk actions, and "에이전트에게 넘기기"
+  (copies a request with the chosen memo ids). Light / dark, phone layout.
+- Storage: one Markdown file per memo, `docs/memos/<YYYYMMDD-HHMMSS>.md` (docs-kit.yml `memos.dir`), front matter
+  title / created / updated / work / tags / pinned / archived / trashed. Written through an API that exists only in the
+  preview server and only for pages opened as localhost (`site/src/lib/memos.ts`); memo saves do not reload open pages.
+  Memos are never site pages, never in search, the grounding check or the document map; `memos.publish: true` puts a
+  read-only copy on the built site (default off).
+- `bin/memos.py list|show` (find and read memos; selectors: ids, `tag:`, `work:`, `since:` / `until:`)
+- `bin/weekly_draft.py --memos <selectors>`: material from the chosen memos only (grouped by 업무, plus the previous
+  report's 다음 and meeting notes; no commits or issues; memo dates need not fall in the period) and a skeleton whose
+  work items are the memos' 업무 and whose front matter lists them (`memos:`); the weekly card shows "참고한 메모" and
+  the build warns about a memo that does not exist
+- Agent template D5: for "주간 보고 써 줘" the agent first asks which memos to use; with none chosen (or "알아서") it
+  works from the period's issues and commits as before. docs-standard §5.2, §5.7; profiles dev, research, all include memos
+- Fix: the preview served `folder/` (trailing slash) as 404 instead of `folder/index.html`
+- Fix: with a site base (`site.base`, e.g. GitHub Pages `/repo/`) the preview answered 404 for every file from `docs/` and the
+  kit's assets (project CSS, viewers, board): Vite strips the base from `req.url` before the kit's middleware; it now reads `originalUrl`
+
 ## 1.0.0 — 2026-11-21
 
 The Astro edition is the docs-kit. No change to the project's `docs/` format; projects on 0.16 or later need nothing.

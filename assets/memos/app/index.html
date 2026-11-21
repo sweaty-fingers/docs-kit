@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>메모</title>
+  <!-- Work memo app (docs-kit memos tab). Memos are Markdown files in the project's docs/memos/ (docs-kit.yml memos.dir),
+       read and written through the preview server's API (../../_kit/api/memos, site/src/lib/memos.ts). On the built site
+       there is no API: the app is read-only (data.json, only with memos.publish: true). Guide: ../README.md -->
+  <link rel="stylesheet" href="../../_kit/vendor/pretendard/pretendardvariable-dynamic-subset.css">
+  <link rel="stylesheet" href="app.css">
+  <script>
+    // Theme before first paint: own choice, else the docs site's, else the system. Embedded (?embed=1): follow the page.
+    (function () {
+      var root = document.documentElement, t = null;
+      try { t = localStorage.getItem("docs-kit-memo-theme") || localStorage.getItem("kit-theme"); } catch (e) {}
+      if (t !== "light" && t !== "dark") t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      root.setAttribute("data-theme", t);
+      if (!/[?&]embed=1/.test(location.search)) return;
+      root.classList.add("embed");
+      var page = null;
+      try { if (window.parent !== window) page = window.parent.document.documentElement; } catch (e) {}
+      if (!page) return;
+      function sync() {
+        var s = page.getAttribute("data-theme");
+        if (!s) s = window.parent.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        root.setAttribute("data-theme", s);
+      }
+      sync();
+      new MutationObserver(sync).observe(page, { attributes: true, attributeFilter: ["data-theme"] });
+      window.parent.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", sync);
+    })();
+  </script>
+</head>
+<body>
+  <header class="top">
+    <button id="menu" type="button" class="icon" title="분류 (업무, 태그)" aria-label="분류 열기">☰</button>
+    <a class="back" href="../index.html" title="문서로 돌아가기">← 문서</a>
+    <span class="logo">메모</span>
+    <span id="mode" class="mode" hidden></span>
+    <div class="grow"></div>
+    <button id="today" type="button" class="btn" title="오늘 날짜의 업무 일지를 열거나 만듭니다">오늘 메모</button>
+    <button id="new" type="button" class="btn primary" title="새 메모 (N)">＋ 새 메모</button>
+    <button id="theme" type="button" class="icon" title="밝게 / 어둡게" aria-label="밝게 / 어둡게">◐</button>
+    <a id="full" class="icon" href="index.html" target="_blank" title="전체 화면으로 열기" aria-label="전체 화면으로 열기" hidden>↗</a>
+  </header>
+  <div id="notice" class="notice" hidden></div>
+  <main class="panes">
+    <nav class="side" id="side" aria-label="메모 분류">
+      <div class="side-sec" id="views"></div>
+      <div class="side-h">업무</div>
+      <div class="side-sec" id="works"></div>
+      <div class="side-h">태그</div>
+      <div class="side-sec" id="tags"></div>
+    </nav>
+    <section class="list" aria-label="메모 목록">
+      <div class="list-tools">
+        <input id="q" type="search" placeholder="찾기 (제목, 본문, 업무, #태그)   /" aria-label="찾기">
+        <div class="row">
+          <label class="small">작성일 <input id="from" type="date" aria-label="이 날부터"></label>
+          <label class="small">~ <input id="to" type="date" aria-label="이 날까지"></label>
+          <select id="sort" aria-label="정렬">
+            <option value="updated">고친 순</option><option value="created">쓴 순</option><option value="title">제목 순</option>
+          </select>
+        </div>
+        <textarea id="quick" rows="1" placeholder="빠른 메모 · Enter로 남김 (#태그)" title="쓰고 Enter. 줄바꿈은 Shift+Enter, #낱말은 태그가 됩니다" aria-label="빠른 메모"></textarea>
+      </div>
+      <div class="bulk" id="bulk" hidden>
+        <span id="bulk-n"></span>
+        <button type="button" class="btn" data-bulk="handoff" title="골라 둔 메모를 에이전트에게 넘길 요청 글을 복사">에이전트에게 넘기기</button>
+        <button type="button" class="btn" data-bulk="work">업무 지정</button>
+        <button type="button" class="btn" data-bulk="tag">태그 더하기</button>
+        <button type="button" class="btn" data-bulk="archive">보관</button>
+        <button type="button" class="btn" data-bulk="trash">휴지통</button>
+        <button type="button" class="btn" data-bulk="restore" hidden>되살리기</button>
+        <button type="button" class="link" data-bulk="all">모두 고르기</button>
+        <button type="button" class="link" data-bulk="none">고르기 해제</button>
+      </div>
+      <div class="list-head"><span id="list-title">모든 메모</span><span id="list-n" class="muted"></span>
+        <button type="button" id="empty-trash" class="link danger" hidden>휴지통 비우기</button></div>
+      <ul id="items" class="items"></ul>
+    </section>
+    <section class="editor" id="editor" aria-label="메모 편집">
+      <div id="empty" class="empty">
+        <p>메모를 고르거나 새로 씁니다.</p>
+        <p class="muted small">단축키: N 새 메모 · / 찾기 · Ctrl/⌘+S 저장 · Ctrl/⌘+Enter 미리보기 · Esc 목록으로(휴대폰)</p>
+      </div>
+      <div id="doc" class="doc" hidden>
+        <div class="doc-top">
+          <button type="button" id="back" class="icon only-narrow" title="목록으로" aria-label="목록으로">←</button>
+          <span id="save" class="save muted small"></span>
+          <div class="grow"></div>
+          <button type="button" id="pin" class="icon" title="고정" aria-label="고정">📌</button>
+          <button type="button" id="archive" class="btn">보관</button>
+          <button type="button" id="trash" class="btn">휴지통</button>
+          <button type="button" id="restore" class="btn" hidden>되살리기</button>
+          <button type="button" id="destroy" class="btn danger" hidden>완전히 지우기</button>
+        </div>
+        <div id="conflict" class="conflict" hidden>
+          이 메모가 다른 곳(다른 창, 에이전트, 편집기)에서 바뀌었습니다.
+          <button type="button" class="btn" id="take-theirs">바뀐 내용 불러오기</button>
+          <button type="button" class="btn" id="take-mine">내 내용으로 덮어쓰기</button>
+        </div>
+        <input id="title" class="title" placeholder="제목 (비우면 첫 줄)" aria-label="제목">
+        <div class="meta">
+          <label class="field">업무 <input id="work" list="work-list" placeholder="주간 보고의 업무 이름" aria-label="업무"></label>
+          <datalist id="work-list"></datalist>
+          <div class="field tags-field">태그 <span id="tag-chips" class="chips"></span>
+            <input id="tag-in" placeholder="태그 + Enter" aria-label="태그 더하기" list="tag-list"></div>
+          <datalist id="tag-list"></datalist>
+        </div>
+        <div class="toolbar" role="toolbar" aria-label="서식">
+          <button type="button" data-md="h">제목</button>
+          <button type="button" data-md="b"><b>굵게</b></button>
+          <button type="button" data-md="ul">• 목록</button>
+          <button type="button" data-md="task">☐ 할 일</button>
+          <button type="button" data-md="code">`코드`</button>
+          <button type="button" data-md="link">링크</button>
+          <div class="grow"></div>
+          <button type="button" id="preview-btn" class="toggle" aria-pressed="false">미리보기</button>
+        </div>
+        <textarea id="body" class="body" placeholder="본문 (Markdown). 무엇을 했고, 무엇이 나왔고, 다음은 무엇인지 적어 두면 주간 보고에 그대로 쓰입니다." aria-label="본문"></textarea>
+        <div id="preview" class="preview" hidden></div>
+        <div class="foot muted small" id="foot"></div>
+      </div>
+    </section>
+  </main>
+  <div id="dialog" class="dialog" hidden role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+    <div class="dlg">
+      <h2 id="dlg-title"></h2>
+      <div id="dlg-body"></div>
+      <div class="dlg-btns"><button type="button" class="btn" id="dlg-cancel">닫기</button><button type="button" class="btn primary" id="dlg-ok"></button></div>
+    </div>
+  </div>
+  <div id="toast" class="toast" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>

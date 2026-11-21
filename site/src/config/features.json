@@ -1,5 +1,5 @@
 {
-  "about": "docs-kit tabs (features), profiles and default areas. Single source for bin/kit.py (via hooks/kitconf.py) and the Astro site (site/src/config). docs-kit-context.md §5.2-§5.3.",
+  "about": "docs-kit tabs (features), profiles and default areas. Single source for bin/kit.py (via bin/kitconf.py) and the Astro site (site/src/config). docs-kit-context.md §5.2-§5.3.",
   "core_titles": {
     "개요": 0,
     "문서 규격": 90,
@@ -35,6 +35,19 @@
         "roadmap"
       ],
       "data": "plan/scope.yml"
+    },
+    {
+      "id": "memos",
+      "title": "메모",
+      "kind": "hook",
+      "path": "memos",
+      "rank": 2.5,
+      "summary": "직접 적는 업무 메모(업무·태그·고정·보관), 에이전트가 주간 보고·문서의 재료로 씀",
+      "starters": [],
+      "recommends": [
+        "weekly"
+      ],
+      "data": "memos"
     },
     {
       "id": "weekly",
@@ -257,6 +270,7 @@
       "features": [
         "history",
         "plan",
+        "memos",
         "weekly",
         "roadmap",
         "graph",
@@ -276,6 +290,7 @@
       "features": [
         "history",
         "plan",
+        "memos",
         "weekly",
         "roadmap",
         "graph",
@@ -295,6 +310,7 @@
       "features": [
         "history",
         "plan",
+        "memos",
         "weekly",
         "roadmap",
         "graph",
